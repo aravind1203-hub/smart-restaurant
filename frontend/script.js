@@ -2,7 +2,11 @@
 // SERVER URL
 // ==========================================
 
-const SERVER_URL = "http://10.29.95.40:3000";
+// Automatically uses:
+// Local  → http://localhost:3000
+// Render → https://smart-restaurant-3axh.onrender.com
+
+const SERVER_URL = window.location.origin;
 
 
 // ==========================================
@@ -125,7 +129,7 @@ async function checkTableAvailability() {
 
 
             // ==========================================
-            // DISABLE PLACE ORDER BUTTON
+            // DISABLE CART BUTTONS
             // ==========================================
 
             const cartButtons =
@@ -151,43 +155,61 @@ async function checkTableAvailability() {
 
             if (cartElement) {
 
-                const message =
-                    document.createElement("div");
+                // Avoid duplicate message
+                if (
+                    !document.getElementById(
+                        "occupied-message"
+                    )
+                ) {
+
+                    const message =
+                        document.createElement("div");
 
 
-                message.style.background =
-                    "#ffe5e5";
-
-                message.style.color =
-                    "#b00000";
-
-                message.style.padding =
-                    "15px";
-
-                message.style.marginTop =
-                    "15px";
-
-                message.style.borderRadius =
-                    "10px";
-
-                message.style.textAlign =
-                    "center";
-
-                message.style.fontWeight =
-                    "bold";
+                    message.id =
+                        "occupied-message";
 
 
-                message.innerHTML =
-
-                    `🔴 Table ${tableNumber} is occupied.<br>` +
-
-                    `❌ Seat not available.`;
+                    message.style.background =
+                        "#ffe5e5";
 
 
+                    message.style.color =
+                        "#b00000";
 
-                cartElement.appendChild(
-                    message
-                );
+
+                    message.style.padding =
+                        "15px";
+
+
+                    message.style.marginTop =
+                        "15px";
+
+
+                    message.style.borderRadius =
+                        "10px";
+
+
+                    message.style.textAlign =
+                        "center";
+
+
+                    message.style.fontWeight =
+                        "bold";
+
+
+                    message.innerHTML =
+
+                        `🔴 Table ${tableNumber} is occupied.<br>` +
+
+                        `❌ Seat not available.`;
+
+
+                    cartElement.appendChild(
+                        message
+                    );
+
+                }
 
             }
 
@@ -198,7 +220,9 @@ async function checkTableAvailability() {
         // TABLE AVAILABLE
         // ==========================================
 
-        else if (table.status === "Available") {
+        else if (
+            table.status === "Available"
+        ) {
 
             console.log(
 
@@ -219,9 +243,6 @@ async function checkTableAvailability() {
             error
 
         );
-
-        // Don't show "server error" here
-        // because the order function handles it.
 
     }
 
@@ -258,7 +279,7 @@ function addToCart(name, price) {
         cart.push({
 
             name: name,
-            price: price,
+            price: Number(price),
             quantity: 1
 
         });
@@ -369,7 +390,8 @@ function updateCart() {
     cart.forEach((item, index) => {
 
         const itemTotal =
-            item.price * item.quantity;
+            Number(item.price) *
+            Number(item.quantity);
 
 
         total += itemTotal;
@@ -465,19 +487,17 @@ async function placeOrder() {
     cart.forEach(item => {
 
         total +=
-            item.price * item.quantity;
+            Number(item.price) *
+            Number(item.quantity);
 
     });
 
 
     try {
 
-
         console.log(
-
             "📡 Sending order to:",
             SERVER_URL
-
         );
 
 
@@ -524,10 +544,8 @@ async function placeOrder() {
 
 
         console.log(
-
             "📥 Server response:",
             data
-
         );
 
 
@@ -585,7 +603,6 @@ async function placeOrder() {
 
         if (data.success) {
 
-
             alert(
 
                 `✅ Order placed successfully!\n\n` +
@@ -614,7 +631,7 @@ async function placeOrder() {
 
             window.location.href =
 
-                `order-status.html?order=${data.orderId}`;
+                `${SERVER_URL}/frontend/order-status.html?order=${data.orderId}`;
 
         }
 
@@ -658,7 +675,7 @@ async function placeOrder() {
 
             "❌ Cannot connect to restaurant server!\n\n" +
 
-            "Please check that the backend server is running."
+            "Please check your internet connection or server."
 
         );
 
