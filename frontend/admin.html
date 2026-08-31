@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>QResto - Admin Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f6f1e8;
+        }
+
+        header {
+            background: #6b1e1e;
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 30px auto;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card h2 {
+            margin: 0;
+            font-size: 35px;
+            color: #6b1e1e;
+        }
+
+        .stat-card p {
+            font-weight: bold;
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            color: #6b1e1e;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .orders {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .order-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .order-card h2 {
+            margin-top: 0;
+            color: #6b1e1e;
+        }
+
+        .order-card ul {
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .no-orders {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+    </style>
+
+</head>
+
+
+<body>
+
+    <header>
+
+        <h1>📊 QResto Admin Dashboard</h1>
+
+        <p>Restaurant Overview</p>
+
+    </header>
+
+
+    <div class="container">
+
+
+        <!-- Statistics -->
+
+        <div class="stats">
+
+
+            <div class="stat-card">
+
+                <h2 id="total-orders">0</h2>
+
+                <p>📦 Total Orders</p>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <h2 id="pending-orders">0</h2>
+
+                <p>⏳ Pending</p>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <h2 id="preparing-orders">0</h2>
+
+                <p>👨‍🍳 Preparing</p>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <h2 id="ready-orders">0</h2>
+
+                <p>✅ Ready</p>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <h2 id="total-sales">₹0</h2>
+
+                <p>💰 Total Sales</p>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- Recent Orders -->
+
+        <h2 class="section-title">
+            🧾 Recent Orders
+        </h2>
+
+
+        <div
+            class="orders"
+            id="orders">
+        </div>
+
+
+    </div>
+
+
+    <script>
+
+        async function loadDashboard() {
+
+            try {
+
+                const response = await fetch(
+                    "http://localhost:3000/api/orders"
+                );
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Server response error"
+                    );
+
+                }
+
+                const data =
+                    await response.json();
+
+                const orders =
+                    data.orders || [];
+
+
+                // =================================
+                // TOTAL ORDERS
+                // =================================
+
+                document.getElementById(
+                    "total-orders"
+                ).textContent = orders.length;
+
+
+                // =================================
+                // STATUS COUNTS
+                // =================================
+
+                const pending =
+                    orders.filter(
+                        order =>
+                            order.status === "Pending"
+                    ).length;
+
+
+                const preparing =
+                    orders.filter(
+                        order =>
+                            order.status === "Preparing"
+                    ).length;
+
+
+                const ready =
+                    orders.filter(
+                        order =>
+                            order.status === "Ready"
+                    ).length;
+
+
+                document.getElementById(
+                    "pending-orders"
+                ).textContent = pending;
+
+
+                document.getElementById(
+                    "preparing-orders"
+                ).textContent = preparing;
+
+
+                document.getElementById(
+                    "ready-orders"
+                ).textContent = ready;
+
+
+                // =================================
+                // TOTAL SALES
+                // =================================
+
+                const totalSales =
+                    orders.reduce(
+                        (sum, order) =>
+                            sum + Number(order.total),
+                        0
+                    );
+
+
+                document.getElementById(
+                    "total-sales"
+                ).textContent =
+                    `₹${totalSales}`;
+
+
+                // =================================
+                // RECENT ORDERS
+                // =================================
+
+                const ordersContainer =
+                    document.getElementById(
+                        "orders"
+                    );
+
+                ordersContainer.innerHTML = "";
+
+
+                if (orders.length === 0) {
+
+                    ordersContainer.innerHTML = `
+                        <div class="no-orders">
+                            📋 No orders found
+                        </div>
+                    `;
+
+                    return;
+                }
+
+
+                // Latest 10 orders
+
+                orders
+                    .slice(0, 10)
+                    .forEach(order => {
+
+
+                        let items = [];
+
+
+                        try {
+
+                            items =
+                                typeof order.items === "string"
+                                    ? JSON.parse(order.items)
+                                    : order.items;
+
+                        } catch (error) {
+
+                            console.error(
+                                "Items error:",
+                                error
+                            );
+
+                        }
+
+
+                        let itemsHTML = "";
+
+
+                        items.forEach(item => {
+
+                            itemsHTML += `
+                                <li>
+                                    ${item.name}
+                                    × ${item.quantity}
+                                    - ₹${item.price}
+                                </li>
+                            `;
+
+                        });
+
+
+                        ordersContainer.innerHTML += `
+
+                            <div class="order-card">
+
+                                <h2>
+                                    🧾 Order #${order.id}
+                                </h2>
+
+                                <p>
+                                    🪑 Table:
+                                    <strong>
+                                        ${order.table_number}
+                                    </strong>
+                                </p>
+
+                                <ul>
+                                    ${itemsHTML}
+                                </ul>
+
+                                <p class="total">
+                                    Total:
+                                    ₹${order.total}
+                                </p>
+
+                                <p class="status">
+                                    Status:
+                                    ${order.status}
+                                </p>
+
+                            </div>
+
+                        `;
+
+                    });
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "❌ Dashboard error:",
+                    error
+                );
+
+                document.getElementById(
+                    "orders"
+                ).innerHTML = `
+                    <div class="no-orders">
+                        ❌ Cannot connect
+                        to restaurant server
+                    </div>
+                `;
+
+            }
+
+        }
+
+
+        // First load
+
+        loadDashboard();
+
+
+        // Auto refresh every 5 seconds
+
+        setInterval(
+            loadDashboard,
+            5000
+        );
+
+    </script>
+
+</body>
+
+</html>

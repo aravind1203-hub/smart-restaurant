@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>QResto - Order Status</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f6f1e8;
+        }
+
+        header {
+            background: #6b1e1e;
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: 40px auto;
+        }
+
+        .order-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .order-card h2 {
+            color: #6b1e1e;
+        }
+
+        .items {
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .status-box,
+        .payment-box {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            background: #f6f1e8;
+        }
+
+        .status {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .pending {
+            color: #d89b00;
+        }
+
+        .preparing {
+            color: #e67e22;
+        }
+
+        .ready {
+            color: green;
+        }
+
+        .payment-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .payment-pending {
+            color: #d89b00;
+            font-weight: bold;
+        }
+
+        .payment-paid {
+            color: green;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .payment-button {
+            width: 100%;
+            margin-top: 20px;
+            padding: 14px;
+
+            border: none;
+            border-radius: 10px;
+
+            background: #d89b00;
+            color: white;
+
+            font-size: 17px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .payment-button:hover {
+            background: #b77d00;
+        }
+
+        .error {
+            text-align: center;
+            color: #6b1e1e;
+            font-weight: bold;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <header>
+
+        <h1>🍽️ QResto</h1>
+
+        <p>Track Your Order</p>
+
+    </header>
+
+
+    <div class="container">
+
+        <div id="order-container">
+
+            <p class="error">
+                Loading order...
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        // ==========================================
+        // SERVER URL
+        // ==========================================
+
+        const SERVER_URL =
+            "http://10.29.95.40:3000";
+
+
+        // ==========================================
+        // GET ORDER ID
+        // ==========================================
+
+        const urlParams =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        const orderId =
+            urlParams.get("order");
+
+
+        // ==========================================
+        // OPEN BILL
+        // ==========================================
+
+        function openBill() {
+
+            window.location.href =
+                `bill.html?order=${orderId}`;
+
+        }
+
+
+        // ==========================================
+        // LOAD ORDER
+        // ==========================================
+
+        async function loadOrder() {
+
+            if (!orderId) {
+
+                document.getElementById(
+                    "order-container"
+                ).innerHTML = `
+
+                    <p class="error">
+                        ❌ Order ID not found
+                    </p>
+
+                `;
+
+                return;
+
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${SERVER_URL}/api/orders/${orderId}`
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Order not found"
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (!data.success) {
+
+                    throw new Error(
+                        "Order not found"
+                    );
+
+                }
+
+
+                const order =
+                    data.order;
+
+
+                // ==========================================
+                // ITEMS
+                // ==========================================
+
+                let items = [];
+
+
+                if (
+                    typeof order.items ===
+                    "string"
+                ) {
+
+                    items =
+                        JSON.parse(order.items);
+
+                }
+
+                else {
+
+                    items =
+                        order.items;
+
+                }
+
+
+                let itemsHTML = "";
+
+
+                items.forEach(item => {
+
+                    const itemTotal =
+                        item.price *
+                        item.quantity;
+
+
+                    itemsHTML += `
+
+                        <li>
+
+                            ${item.name}
+
+                            × ${item.quantity}
+
+                            - ₹${itemTotal}
+
+                        </li>
+
+                    `;
+
+                });
+
+
+                // ==========================================
+                // ORDER STATUS
+                // ==========================================
+
+                let statusClass =
+                    "pending";
+
+                let statusIcon =
+                    "🟡";
+
+
+                if (
+                    order.status ===
+                    "Preparing"
+                ) {
+
+                    statusClass =
+                        "preparing";
+
+                    statusIcon =
+                        "🟠";
+
+                }
+
+
+                if (
+                    order.status ===
+                    "Ready"
+                ) {
+
+                    statusClass =
+                        "ready";
+
+                    statusIcon =
+                        "🟢";
+
+                }
+
+
+                // ==========================================
+                // PAYMENT STATUS
+                // ==========================================
+
+                let paymentHTML = "";
+
+
+                if (
+                    order.payment_status ===
+                    "Paid"
+                ) {
+
+                    paymentHTML = `
+
+                        <div class="payment-box">
+
+                            <div class="payment-title">
+                                💰 Payment Status
+                            </div>
+
+                            <p class="payment-paid">
+                                ✅ Payment Received
+                            </p>
+
+                            <p>
+                                Thank you! Your payment
+                                has been confirmed.
+                            </p>
+
+                        </div>
+
+                    `;
+
+                }
+
+                else {
+
+                    paymentHTML = `
+
+                        <div class="payment-box">
+
+                            <div class="payment-title">
+                                💰 Payment Status
+                            </div>
+
+                            <p class="payment-pending">
+                                🟡 Payment Pending
+                            </p>
+
+                            <p>
+                                Please pay at the
+                                restaurant counter.
+                            </p>
+
+                        </div>
+
+                    `;
+
+                }
+
+
+                // ==========================================
+                // BILL BUTTON
+                // ==========================================
+
+                let billButton = "";
+
+
+                if (
+                    order.status ===
+                    "Ready"
+                ) {
+
+                    billButton = `
+
+                        <button
+                            class="payment-button"
+                            onclick="openBill()"
+                        >
+
+                            🧾 View Bill
+
+                        </button>
+
+                    `;
+
+                }
+
+
+                // ==========================================
+                // DISPLAY
+                // ==========================================
+
+                document.getElementById(
+                    "order-container"
+                ).innerHTML = `
+
+                    <div class="order-card">
+
+                        <h2>
+                            🧾 Order #${order.id}
+                        </h2>
+
+
+                        <p>
+
+                            🪑 Table:
+
+                            <strong>
+                                ${order.table_number}
+                            </strong>
+
+                        </p>
+
+
+                        <h3>
+                            🍛 Your Items
+                        </h3>
+
+
+                        <ul class="items">
+
+                            ${itemsHTML}
+
+                        </ul>
+
+
+                        <p class="total">
+
+                            Total:
+                            ₹${order.total}
+
+                        </p>
+
+
+                        <div class="status-box">
+
+                            <div
+                                class="status ${statusClass}"
+                            >
+
+                                ${statusIcon}
+
+                                ${order.status}
+
+                            </div>
+
+                        </div>
+
+
+                        ${paymentHTML}
+
+
+                        ${billButton}
+
+                    </div>
+
+                `;
+
+            }
+
+
+            catch (error) {
+
+                console.error(
+                    "❌ Order status error:",
+                    error
+                );
+
+
+                document.getElementById(
+                    "order-container"
+                ).innerHTML = `
+
+                    <p class="error">
+
+                        ❌ Cannot load order status
+
+                    </p>
+
+                `;
+
+            }
+
+        }
+
+
+        // ==========================================
+        // LOAD
+        // ==========================================
+
+        loadOrder();
+
+
+        // ==========================================
+        // AUTO REFRESH
+        // ==========================================
+
+        setInterval(
+            loadOrder,
+            5000
+        );
+
+    </script>
+
+</body>
+
+</html>

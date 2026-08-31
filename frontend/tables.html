@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>QResto - Select Table</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f6f1e8;
+        }
+
+        header {
+            background: #6b1e1e;
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 35px auto;
+        }
+
+        .container h2 {
+            text-align: center;
+            color: #6b1e1e;
+            margin-bottom: 30px;
+        }
+
+        .table-container {
+            display: grid;
+            grid-template-columns: repeat(
+                auto-fit,
+                minmax(180px, 1fr)
+            );
+
+            gap: 25px;
+        }
+
+        .table-card {
+            background: white;
+            padding: 25px;
+            text-align: center;
+            border-radius: 15px;
+
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.15);
+
+            transition: 0.2s;
+        }
+
+        .table-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .table-icon {
+            font-size: 45px;
+        }
+
+        .table-card h3 {
+            color: #6b1e1e;
+            margin: 10px 0;
+        }
+
+        .table-card button {
+            width: 100%;
+            padding: 12px;
+
+            border: none;
+            border-radius: 10px;
+
+            background: #d89b00;
+            color: white;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .table-card button:hover {
+            background: #b77d00;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <header>
+
+        <h1>🍽️ QResto</h1>
+
+        <p>Select Your Table</p>
+
+    </header>
+
+
+    <div class="container">
+
+        <h2>🪑 Choose Table</h2>
+
+
+        <div class="table-container">
+
+
+            <!-- Table 1 -->
+
+            <div class="table-card">
+
+                <div class="table-icon">
+                    🪑
+                </div>
+
+                <h3>Table 1</h3>
+
+                <button onclick="selectTable(1)">
+                    Select Table
+                </button>
+
+            </div>
+
+
+            <!-- Table 2 -->
+
+            <div class="table-card">
+
+                <div class="table-icon">
+                    🪑
+                </div>
+
+                <h3>Table 2</h3>
+
+                <button onclick="selectTable(2)">
+                    Select Table
+                </button>
+
+            </div>
+
+
+            <!-- Table 3 -->
+
+            <div class="table-card">
+
+                <div class="table-icon">
+                    🪑
+                </div>
+
+                <h3>Table 3</h3>
+
+                <button onclick="selectTable(3)">
+                    Select Table
+                </button>
+
+            </div>
+
+
+            <!-- Table 4 -->
+
+            <div class="table-card">
+
+                <div class="table-icon">
+                    🪑
+                </div>
+
+                <h3>Table 4</h3>
+
+                <button onclick="selectTable(4)">
+                    Select Table
+                </button>
+
+            </div>
+
+
+            <!-- Table 5 -->
+
+            <div class="table-card">
+
+                <div class="table-icon">
+                    🪑
+                </div>
+
+                <h3>Table 5</h3>
+
+                <button onclick="selectTable(5)">
+                    Select Table
+                </button>
+
+            </div>
+
+
+            <!-- Table 6 -->
+
+            <div class="table-card">
+
+                <div class="table-icon">
+                    🪑
+                </div>
+
+                <h3>Table 6</h3>
+
+                <button onclick="selectTable(6)">
+                    Select Table
+                </button>
+
+            </div>
+
+
+            <!-- Table 7 -->
+
+            <div class="table-card">
+
+                <div class="table-icon">
+                    🪑
+                </div>
+
+                <h3>Table 7</h3>
+
+                <button onclick="selectTable(7)">
+                    Select Table
+                </button>
+
+            </div>
+
+
+            <!-- Table 8 -->
+
+            <div class="table-card">
+
+                <div class="table-icon">
+                    🪑
+                </div>
+
+                <h3>Table 8</h3>
+
+                <button onclick="selectTable(8)">
+                    Select Table
+                </button>
+
+            </div>
+
+
+            <!-- Table 9 -->
+
+            <div class="table-card">
+
+                <div class="table-icon">
+                    🪑
+                </div>
+
+                <h3>Table 9</h3>
+
+                <button onclick="selectTable(9)">
+                    Select Table
+                </button>
+
+            </div>
+
+
+            <!-- Table 10 -->
+
+            <div class="table-card">
+
+                <div class="table-icon">
+                    🪑
+                </div>
+
+                <h3>Table 10</h3>
+
+                <button onclick="selectTable(10)">
+                    Select Table
+                </button>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        function selectTable(tableNumber) {
+
+            window.location.href =
+                "index.html?table=" + tableNumber;
+
+        }
+
+    </script>
+
+
+</body>
+
+</html>

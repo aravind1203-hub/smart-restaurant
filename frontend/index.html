@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+```
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>QResto - Smart Restaurant</title>
+
+<link rel="stylesheet" href="style.css">
+```
+
+</head>
+
+<body>
+
+```
+<!-- ============================= -->
+<!-- HEADER -->
+<!-- ============================= -->
+
+<header>
+
+    <div class="restaurant-icon">
+        🍽️
+    </div>
+
+    <h1>QResto</h1>
+
+    <p>Smart Restaurant Ordering</p>
+
+    <div class="table-info">
+        🪑 Table:
+        <span id="table-number">Loading...</span>
+    </div>
+
+</header>
+
+
+<!-- ============================= -->
+<!-- MAIN CONTAINER -->
+<!-- ============================= -->
+
+<main class="container">
+
+
+    <!-- ============================= -->
+    <!-- MAIN COURSE -->
+    <!-- ============================= -->
+
+    <section>
+
+        <h2 class="section-title">
+            🍛 Main Course
+        </h2>
+
+
+        <div class="food-container">
+
+
+            <!-- Chicken Biryani -->
+
+            <div class="food-card">
+
+                <div class="food-image">
+
+                    <img
+                        src="image/briyani.jpg"
+                        alt="Chicken Biryani"
+                    >
+
+                </div>
+
+                <div class="food-details">
+
+                    <h3>
+                        Chicken Biryani
+                    </h3>
+
+                    <p class="price">
+                        ₹180
+                    </p>
+
+                    <button
+                        onclick="addToCart('Chicken Biryani', 180)"
+                    >
+                        🛒 Add to Cart
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Chicken Fried Rice -->
+
+            <div class="food-card">
+
+                <div class="food-image">
+
+                    <img
+                        src="image/fried-rice.jpg"
+                        alt="Chicken Fried Rice"
+                    >
+
+                </div>
+
+                <div class="food-details">
+
+                    <h3>
+                        Chicken Fried Rice
+                    </h3>
+
+                    <p class="price">
+                        ₹150
+                    </p>
+
+                    <button
+                        onclick="addToCart('Chicken Fried Rice', 150)"
+                    >
+                        🛒 Add to Cart
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Parotta -->
+
+            <div class="food-card">
+
+                <div class="food-image">
+
+                    <img
+                        src="image/parota.jpg"
+                        alt="Parotta"
+                    >
+
+                </div>
+
+                <div class="food-details">
+
+                    <h3>
+                        Parotta
+                    </h3>
+
+                    <p class="price">
+                        ₹20
+                    </p>
+
+                    <button
+                        onclick="addToCart('Parotta', 20)"
+                    >
+                        🛒 Add to Cart
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================= -->
+    <!-- DRINKS -->
+    <!-- ============================= -->
+
+    <section>
+
+        <h2 class="section-title">
+            🥤 Drinks
+        </h2>
+
+
+        <div class="food-container">
+
+
+            <!-- Fresh Lime -->
+
+            <div class="food-card">
+
+                <div class="food-image">
+
+                    <img
+                        src="image/fresh-lime.jpg"
+                        alt="Fresh Lime"
+                    >
+
+                </div>
+
+                <div class="food-details">
+
+                    <h3>
+                        Fresh Lime
+                    </h3>
+
+                    <p class="price">
+                        ₹40
+                    </p>
+
+                    <button
+                        onclick="addToCart('Fresh Lime', 40)"
+                    >
+                        🛒 Add to Cart
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================= -->
+    <!-- CART -->
+    <!-- ============================= -->
+
+    <section class="cart">
+
+        <div class="cart-header">
+
+            <h2>
+                🛒 Your Cart
+            </h2>
+
+            <span class="cart-label">
+                Review your order
+            </span>
+
+        </div>
+
+
+        <ul id="cart-items">
+
+            <!-- Cart items will appear here -->
+
+        </ul>
+
+
+        <div class="cart-total">
+
+            <span>
+                Total Amount
+            </span>
+
+            <strong id="total">
+                Total: ₹0
+            </strong>
+
+        </div>
+
+
+        <button
+            class="place-order-btn"
+            onclick="placeOrder()"
+        >
+            🍽️ Place Order
+        </button>
+
+    </section>
+
+</main>
+
+
+<!-- ============================= -->
+<!-- JAVASCRIPT -->
+<!-- ============================= -->
+
+<script src="script.js"></script>
+```
+
+</body>
+
+</html>

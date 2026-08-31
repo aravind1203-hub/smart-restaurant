@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>QResto - Cashier Dashboard</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f6f1e8;
+        }
+
+        header {
+            background: #6b1e1e;
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 30px auto;
+        }
+
+        .container > h2 {
+            color: #6b1e1e;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .payments {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(280px, 1fr));
+
+            gap: 25px;
+        }
+
+        .payment-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .payment-card h2 {
+            margin-top: 0;
+            color: #6b1e1e;
+        }
+
+        .items {
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .payment-status {
+            font-weight: bold;
+            margin: 15px 0;
+            color: #d89b00;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+
+            border: none;
+            border-radius: 10px;
+
+            background: #d89b00;
+            color: white;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #b77d00;
+        }
+
+        .empty {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #6b1e1e;
+            padding: 30px;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <header>
+
+        <h1>💰 QResto Cashier</h1>
+
+        <p>Payment Dashboard</p>
+
+    </header>
+
+
+    <div class="container">
+
+        <h2>
+            💵 Pending Payments
+        </h2>
+
+
+        <div
+            class="payments"
+            id="payments"
+        >
+
+            <p class="empty">
+                Loading payments...
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        // ==========================================
+        // SERVER URL
+        // ==========================================
+
+        const SERVER_URL =
+            "http://10.29.95.40:3000";
+
+
+        // ==========================================
+        // LOAD PENDING PAYMENTS
+        // ==========================================
+
+        async function loadPayments() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${SERVER_URL}/api/payments/pending`
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Server error"
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                const container =
+                    document.getElementById(
+                        "payments"
+                    );
+
+
+                container.innerHTML = "";
+
+
+                // ==========================================
+                // NO PAYMENTS
+                // ==========================================
+
+                if (
+                    !data.orders ||
+                    data.orders.length === 0
+                ) {
+
+                    container.innerHTML = `
+
+                        <p class="empty">
+
+                            ✅ No pending payments
+
+                        </p>
+
+                    `;
+
+                    return;
+
+                }
+
+
+                // ==========================================
+                // DISPLAY PAYMENTS
+                // ==========================================
+
+                data.orders.forEach(order => {
+
+
+                    let items = [];
+
+
+                    if (
+                        typeof order.items ===
+                        "string"
+                    ) {
+
+                        items =
+                            JSON.parse(order.items);
+
+                    }
+
+                    else {
+
+                        items =
+                            order.items;
+
+                    }
+
+
+                    let itemsHTML = "";
+
+
+                    items.forEach(item => {
+
+                        itemsHTML += `
+
+                            <li>
+
+                                ${item.name}
+
+                                × ${item.quantity}
+
+                                - ₹${
+
+                                    item.price *
+                                    item.quantity
+
+                                }
+
+                            </li>
+
+                        `;
+
+                    });
+
+
+                    container.innerHTML += `
+
+                        <div class="payment-card">
+
+                            <h2>
+
+                                🧾 Order #${order.id}
+
+                            </h2>
+
+
+                            <p>
+
+                                🪑 Table:
+
+                                <strong>
+                                    ${order.table_number}
+                                </strong>
+
+                            </p>
+
+
+                            <h3>
+                                🍛 Items
+                            </h3>
+
+
+                            <ul class="items">
+
+                                ${itemsHTML}
+
+                            </ul>
+
+
+                            <p class="total">
+
+                                💰 Total:
+                                ₹${order.total}
+
+                            </p>
+
+
+                            <p class="payment-status">
+
+                                Payment:
+                                ${order.payment_status}
+
+                            </p>
+
+
+                            <button
+                                onclick="
+                                    receivePayment(
+                                        ${order.id}
+                                    )
+                                "
+                            >
+
+                                💵 Receive Payment
+
+                            </button>
+
+                        </div>
+
+                    `;
+
+                });
+
+            }
+
+
+            catch (error) {
+
+                console.error(
+                    "❌ Payment loading error:",
+                    error
+                );
+
+
+                document.getElementById(
+                    "payments"
+                ).innerHTML = `
+
+                    <p class="empty">
+
+                        ❌ Cannot connect to server
+
+                    </p>
+
+                `;
+
+            }
+
+        }
+
+
+        // ==========================================
+        // RECEIVE PAYMENT
+        // ==========================================
+
+        async function receivePayment(orderId) {
+
+
+            const confirmPayment =
+                confirm(
+
+                    `💰 Confirm payment received?\n\n` +
+
+                    `Order ID: #${orderId}`
+
+                );
+
+
+            if (!confirmPayment) {
+
+                return;
+
+            }
+
+
+            try {
+
+
+                const response =
+                    await fetch(
+
+                        `${SERVER_URL}/api/payments/${orderId}`,
+
+                        {
+
+                            method: "PUT",
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json"
+
+                            }
+
+                        }
+
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (data.success) {
+
+                    alert(
+                        "✅ Payment received successfully!"
+                    );
+
+
+                    loadPayments();
+
+                }
+
+                else {
+
+                    alert(
+                        "❌ Payment update failed!"
+                    );
+
+                }
+
+            }
+
+
+            catch (error) {
+
+                console.error(
+                    "❌ Payment error:",
+                    error
+                );
+
+
+                alert(
+                    "❌ Cannot connect to server!"
+                );
+
+            }
+
+        }
+
+
+        // ==========================================
+        // FIRST LOAD
+        // ==========================================
+
+        loadPayments();
+
+
+        // ==========================================
+        // AUTO REFRESH
+        // ==========================================
+
+        setInterval(
+
+            loadPayments,
+
+            5000
+
+        );
+
+    </script>
+
+</body>
+
+</html>

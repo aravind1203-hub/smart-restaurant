@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>QResto - Order History</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f6f1e8;
+        }
+
+        header {
+            background: #6b1e1e;
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 30px auto;
+        }
+
+        .container > h2 {
+            text-align: center;
+            color: #6b1e1e;
+            margin-bottom: 25px;
+        }
+
+        .orders {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .order-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .order-card h2 {
+            margin-top: 0;
+            color: #6b1e1e;
+        }
+
+        .order-card ul {
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .total {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        .no-orders {
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+            padding: 30px;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <header>
+
+        <h1>📋 QResto Order History</h1>
+
+        <p>View Previous Restaurant Orders</p>
+
+    </header>
+
+
+    <div class="container">
+
+        <h2>🧾 All Orders</h2>
+
+        <div
+            class="orders"
+            id="orders">
+        </div>
+
+    </div>
+
+
+    <script>
+
+        // ==========================================
+        // LOAD ORDER HISTORY
+        // ==========================================
+
+        async function loadOrderHistory() {
+
+            try {
+
+                const response = await fetch(
+                    "http://localhost:3000/api/orders"
+                );
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Server response error"
+                    );
+
+                }
+
+                const data =
+                    await response.json();
+
+                const ordersContainer =
+                    document.getElementById("orders");
+
+                ordersContainer.innerHTML = "";
+
+
+                if (
+                    !data.orders ||
+                    data.orders.length === 0
+                ) {
+
+                    ordersContainer.innerHTML = `
+                        <div class="no-orders">
+                            📋 No orders found
+                        </div>
+                    `;
+
+                    return;
+                }
+
+
+                // Display all orders
+
+                data.orders.forEach(order => {
+
+                    let items = [];
+
+
+                    try {
+
+                        items =
+                            typeof order.items === "string"
+                                ? JSON.parse(order.items)
+                                : order.items;
+
+                    }
+
+                    catch (error) {
+
+                        console.error(
+                            "❌ Items error:",
+                            error
+                        );
+
+                    }
+
+
+                    let itemsHTML = "";
+
+
+                    items.forEach(item => {
+
+                        itemsHTML += `
+                            <li>
+                                ${item.name}
+                                × ${item.quantity}
+                                - ₹${item.price}
+                            </li>
+                        `;
+
+                    });
+
+
+                    const status =
+                        order.status || "Pending";
+
+
+                    ordersContainer.innerHTML += `
+
+                        <div class="order-card">
+
+                            <h2>
+                                🧾 Order #${order.id}
+                            </h2>
+
+                            <p>
+                                🪑 Table:
+                                <strong>
+                                    ${order.table_number}
+                                </strong>
+                            </p>
+
+                            <ul>
+                                ${itemsHTML}
+                            </ul>
+
+                            <p class="total">
+                                Total:
+                                ₹${order.total}
+                            </p>
+
+                            <p class="status">
+                                Status:
+                                ${status}
+                            </p>
+
+                        </div>
+
+                    `;
+
+                });
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "❌ Cannot load order history:",
+                    error
+                );
+
+                document.getElementById(
+                    "orders"
+                ).innerHTML = `
+
+                    <div class="no-orders">
+                        ❌ Cannot connect
+                        to restaurant server
+                    </div>
+
+                `;
+
+            }
+
+        }
+
+
+        // Load history
+
+        loadOrderHistory();
+
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>QResto - Kitchen Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f6f1e8;
+        }
+
+        header {
+            background: #6b1e1e;
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        header p {
+            margin-bottom: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 30px auto;
+        }
+
+        .container > h2 {
+            text-align: center;
+            color: #6b1e1e;
+            margin-bottom: 25px;
+        }
+
+        .orders {
+            display: grid;
+            grid-template-columns: repeat(
+                auto-fit,
+                minmax(280px, 1fr)
+            );
+            gap: 25px;
+        }
+
+        .order-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .order-card h2 {
+            margin-top: 0;
+            color: #6b1e1e;
+        }
+
+        .order-card ul {
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .status {
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: #d89b00;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #b77d00;
+        }
+
+        button:disabled {
+            background: #777;
+            cursor: not-allowed;
+        }
+
+        .no-orders {
+            text-align: center;
+            font-size: 18px;
+            color: #666;
+            padding: 30px;
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <!-- Header -->
+
+    <header>
+
+        <h1>👨‍🍳 QResto Kitchen Dashboard</h1>
+
+        <p>Manage Customer Orders</p>
+
+    </header>
+
+
+    <!-- Main Container -->
+
+    <div class="container">
+
+        <h2>🆕 New Orders</h2>
+
+        <!-- Orders will appear here -->
+
+        <div class="orders" id="orders"></div>
+
+    </div>
+
+
+    <!-- JavaScript -->
+
+    <script>
+
+        // ==========================================
+        // LOAD ORDERS FROM BACKEND
+        // ==========================================
+
+        async function loadOrders() {
+
+            try {
+
+                const response = await fetch(
+                    "http://localhost:3000/api/orders"
+                );
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Server returned an error"
+                    );
+
+                }
+
+                const data = await response.json();
+
+                console.log("Orders received:", data);
+
+                const ordersContainer =
+                    document.getElementById("orders");
+
+                ordersContainer.innerHTML = "";
+
+
+                // No orders
+
+                if (
+                    !data.orders ||
+                    data.orders.length === 0
+                ) {
+
+                    ordersContainer.innerHTML = `
+                        <div class="no-orders">
+                            🍽️ No orders yet
+                        </div>
+                    `;
+
+                    return;
+                }
+
+
+                // Display every order
+
+                data.orders
+    .filter(order =>
+        order.status === "Pending" ||
+        order.status === "Preparing"
+    )
+    .forEach(order => {
+
+                    let items;
+
+
+                    // Convert JSON string to array
+
+                    try {
+
+                        if (
+                            typeof order.items === "string"
+                        ) {
+
+                            items = JSON.parse(
+                                order.items
+                            );
+
+                        } else {
+
+                            items = order.items;
+
+                        }
+
+                    } catch (error) {
+
+                        console.error(
+                            "❌ Items JSON error:",
+                            error
+                        );
+
+                        items = [];
+
+                    }
+
+
+                    // Create items HTML
+
+                    let itemsHTML = "";
+
+
+                    items.forEach(item => {
+
+                        itemsHTML += `
+                            <li>
+                                ${item.name}
+                                × ${item.quantity}
+                            </li>
+                        `;
+
+                    });
+
+
+                    // Default status
+
+                    const status =
+                        order.status || "Pending";
+
+
+                    // Button
+
+                    let buttonHTML = "";
+
+
+                    if (status === "Pending") {
+
+                        buttonHTML = `
+                            <button
+                                onclick="startPreparing(${order.id})"
+                            >
+                                👨‍🍳 Start Preparing
+                            </button>
+                        `;
+
+                    }
+
+                    else if (status === "Preparing") {
+
+                        buttonHTML = `
+                            <button
+                                onclick="markReady(${order.id})"
+                            >
+                                ✅ Mark as Ready
+                            </button>
+                        `;
+
+                    }
+
+                    else {
+
+                        buttonHTML = `
+                            <button disabled>
+                                ✅ Ready
+                            </button>
+                        `;
+
+                    }
+
+
+                    // Create order card
+
+                    ordersContainer.innerHTML += `
+
+                        <div class="order-card">
+
+                            <h2>
+                                🪑 Table
+                                ${order.table_number}
+                            </h2>
+
+                            <ul>
+                                ${itemsHTML}
+                            </ul>
+
+                            <p>
+                                <strong>
+                                    Total:
+                                    ₹${order.total}
+                                </strong>
+                            </p>
+
+                            <p class="status">
+
+                                Status:
+                                ${status}
+
+                            </p>
+
+                            ${buttonHTML}
+
+                        </div>
+
+                    `;
+
+                });
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "❌ Cannot load orders:",
+                    error
+                );
+
+                document.getElementById("orders").innerHTML = `
+
+                    <div class="no-orders">
+
+                        ❌ Cannot connect to restaurant server
+
+                    </div>
+
+                `;
+
+            }
+
+        }
+
+
+        // ==========================================
+        // PENDING → PREPARING
+        // ==========================================
+
+        async function startPreparing(orderId) {
+
+            try {
+
+                const response = await fetch(
+
+                    `http://localhost:3000/api/orders/${orderId}/status`,
+
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body: JSON.stringify({
+
+                            status: "Preparing"
+
+                        })
+
+                    }
+
+                );
+
+
+                const data =
+                    await response.json();
+
+
+                if (data.success) {
+
+                    alert(
+                        "👨‍🍳 Order is now Preparing!"
+                    );
+
+                    loadOrders();
+
+                }
+
+                else {
+
+                    alert(
+                        "❌ Could not update order!"
+                    );
+
+                }
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "❌ Status update error:",
+                    error
+                );
+
+                alert(
+                    "❌ Could not connect to server!"
+                );
+
+            }
+
+        }
+
+
+        // ==========================================
+        // PREPARING → READY
+        // ==========================================
+
+        async function markReady(orderId) {
+
+            try {
+
+                const response = await fetch(
+
+                    `http://localhost:3000/api/orders/${orderId}/status`,
+
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body: JSON.stringify({
+
+                            status: "Ready"
+
+                        })
+
+                    }
+
+                );
+
+
+                const data =
+                    await response.json();
+
+
+                if (data.success) {
+
+                    alert(
+                        "✅ Order is Ready!"
+                    );
+
+                    loadOrders();
+
+                }
+
+                else {
+
+                    alert(
+                        "❌ Could not update order!"
+                    );
+
+                }
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "❌ Status update error:",
+                    error
+                );
+
+                alert(
+                    "❌ Could not connect to server!"
+                );
+
+            }
+
+        }
+
+
+        // ==========================================
+        // LOAD ORDERS WHEN PAGE OPENS
+        // ==========================================
+
+        loadOrders();
+        // Automatically check for new orders every 5 seconds
+setInterval(loadOrders, 5000);
+
+    </script>
+
+</body>
+
+</html>

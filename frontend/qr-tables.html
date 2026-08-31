@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>QResto - Table QR Codes</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f6f1e8;
+        }
+
+        header {
+            background: #6b1e1e;
+            color: white;
+            text-align: center;
+            padding: 25px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 30px;
+        }
+
+        header p {
+            margin-bottom: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 30px auto;
+        }
+
+        .tables {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(auto-fit, minmax(220px, 1fr));
+
+            gap: 25px;
+
+        }
+
+        .table-card {
+
+            background: white;
+
+            padding: 20px;
+
+            border-radius: 15px;
+
+            text-align: center;
+
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.15);
+
+        }
+
+        .table-card h2 {
+
+            color: #6b1e1e;
+
+            margin-top: 0;
+
+        }
+
+        .qr {
+
+            width: 180px;
+            height: 180px;
+
+            margin: 15px auto;
+
+        }
+
+        .table-link {
+
+            font-size: 13px;
+
+            color: #555;
+
+            word-break: break-all;
+
+            margin: 10px 0;
+
+        }
+
+        button {
+
+            padding: 10px 18px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #d89b00;
+
+            color: white;
+
+            font-size: 15px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+        }
+
+        button:hover {
+
+            background: #b77d00;
+
+        }
+
+
+        /* PRINT BUTTON */
+
+        .print-button {
+
+            display: block;
+
+            margin: 25px auto;
+
+            background: #6b1e1e;
+
+            font-size: 17px;
+
+            padding: 12px 25px;
+
+        }
+
+        .print-button:hover {
+
+            background: #4e1515;
+
+        }
+
+
+        /* PRINT STYLE */
+
+        @media print {
+
+            body {
+
+                background: white;
+
+            }
+
+            header {
+
+                background: white;
+
+                color: black;
+
+                border-bottom: 2px solid black;
+
+            }
+
+            .print-button {
+
+                display: none;
+
+            }
+
+            .table-card {
+
+                box-shadow: none;
+
+                border: 1px solid #ddd;
+
+                break-inside: avoid;
+
+            }
+
+            button {
+
+                display: none;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- ==========================================
+         HEADER
+    ========================================== -->
+
+    <header>
+
+        <h1>
+            📱 QResto Table QR Codes
+        </h1>
+
+        <p>
+            Scan QR code to open the restaurant menu
+        </p>
+
+    </header>
+
+
+
+    <!-- ==========================================
+         PRINT BUTTON
+    ========================================== -->
+
+    <button
+        class="print-button"
+        onclick="window.print()">
+
+        🖨️ Print All QR Codes
+
+    </button>
+
+
+
+    <!-- ==========================================
+         TABLE CONTAINER
+    ========================================== -->
+
+    <div class="container">
+
+        <div
+            class="tables"
+            id="tables">
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ==========================================
+         QR CODE LIBRARY
+    ========================================== -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
+    </script>
+
+
+
+    <script>
+
+        // ==========================================
+        // IMPORTANT
+        // ==========================================
+
+        /*
+            PC IP ADDRESS
+
+            Your computer IP:
+            10.29.95.40
+
+            Live Server:
+            5500
+
+            Frontend:
+            /frontend/index.html
+        */
+
+
+        const PC_IP =
+            "10.29.95.40";
+
+
+        const FRONTEND_URL =
+            `http://${PC_IP}:5500/frontend/index.html`;
+
+
+
+        // ==========================================
+        // TABLE CONTAINER
+        // ==========================================
+
+        const tablesContainer =
+            document.getElementById("tables");
+
+
+
+        // ==========================================
+        // CREATE TABLE CARDS
+        // ==========================================
+
+        for (
+            let table = 1;
+            table <= 10;
+            table++
+        ) {
+
+
+            // Unique QR ID
+
+            const qrId =
+                `qr-table-${table}`;
+
+
+            // ==========================================
+            // CUSTOMER MENU URL
+            // ==========================================
+
+            const menuURL =
+                `${FRONTEND_URL}?table=${table}`;
+
+
+
+            // ==========================================
+            // CREATE CARD
+            // ==========================================
+
+            tablesContainer.innerHTML += `
+
+                <div class="table-card">
+
+                    <h2>
+                        🪑 Table ${table}
+                    </h2>
+
+
+                    <div
+                        class="qr"
+                        id="${qrId}">
+                    </div>
+
+
+                    <p class="table-link">
+
+                        ${menuURL}
+
+                    </p>
+
+
+                    <button
+                        onclick="openMenu(${table})">
+
+                        🍽️ Open Menu
+
+                    </button>
+
+                </div>
+
+            `;
+
+        }
+
+
+
+        // ==========================================
+        // GENERATE QR CODES
+        // ==========================================
+
+        for (
+            let table = 1;
+            table <= 10;
+            table++
+        ) {
+
+
+            const menuURL =
+                `${FRONTEND_URL}?table=${table}`;
+
+
+
+            new QRCode(
+
+                document.getElementById(
+                    `qr-table-${table}`
+                ),
+
+                {
+
+                    text: menuURL,
+
+                    width: 180,
+
+                    height: 180
+
+                }
+
+            );
+
+        }
+
+
+
+        // ==========================================
+        // OPEN CUSTOMER MENU
+        // ==========================================
+
+        function openMenu(table) {
+
+
+            const menuURL =
+                `${FRONTEND_URL}?table=${table}`;
+
+
+            window.open(
+
+                menuURL,
+
+                "_blank"
+
+            );
+
+        }
+
+    </script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>QResto - Bill</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f6f1e8;
+            color: #222;
+        }
+
+        /* ================================
+           HEADER
+        ================================= */
+
+        header {
+            background: #6b1e1e;
+            color: white;
+            text-align: center;
+            padding: 25px 15px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 30px;
+        }
+
+        header p {
+            margin: 7px 0 0;
+            font-size: 15px;
+        }
+
+        /* ================================
+           BILL CONTAINER
+        ================================= */
+
+        .bill-container {
+            width: 92%;
+            max-width: 650px;
+
+            margin: 35px auto;
+
+            background: white;
+
+            padding: 25px;
+
+            border-radius: 18px;
+
+            box-shadow:
+                0 5px 18px rgba(0, 0, 0, 0.12);
+
+            border-top: 5px solid #6b1e1e;
+        }
+
+        /* ================================
+           TITLE
+        ================================= */
+
+        .bill-title {
+            text-align: center;
+
+            color: #6b1e1e;
+
+            margin-top: 0;
+            margin-bottom: 25px;
+
+            font-size: 25px;
+        }
+
+        /* ================================
+           ORDER INFO
+        ================================= */
+
+        .bill-info {
+            background: #faf7f1;
+
+            padding: 16px;
+
+            border-radius: 10px;
+
+            margin-bottom: 25px;
+
+            border: 1px solid #eee;
+        }
+
+        .bill-info p {
+            margin: 8px 0;
+
+            font-size: 16px;
+        }
+
+        .bill-info strong {
+            color: #6b1e1e;
+        }
+
+        /* ================================
+           ITEMS TITLE
+        ================================= */
+
+        .items-title {
+            color: #6b1e1e;
+
+            font-size: 19px;
+
+            margin-bottom: 15px;
+        }
+
+        /* ================================
+           BILL ITEMS
+        ================================= */
+
+        #bill-items {
+            margin-top: 10px;
+        }
+
+        .bill-item {
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            background: #faf7f1;
+
+            padding: 14px;
+
+            margin-bottom: 10px;
+
+            border-radius: 10px;
+
+            border: 1px solid #eee;
+        }
+
+        .item-left {
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 5px;
+        }
+
+        .item-name {
+            font-weight: bold;
+
+            color: #333;
+        }
+
+        .item-details {
+            font-size: 13px;
+
+            color: #777;
+        }
+
+        .item-price {
+            font-size: 16px;
+
+            font-weight: bold;
+
+            color: #6b1e1e;
+        }
+
+        /* ================================
+           TOTAL
+        ================================= */
+
+        .bill-total {
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            margin-top: 25px;
+
+            padding: 20px 5px;
+
+            border-top: 2px solid #ddd;
+
+            font-size: 18px;
+        }
+
+        .bill-total strong {
+            color: #6b1e1e;
+
+            font-size: 25px;
+        }
+
+        /* ================================
+           PAYMENT
+        ================================= */
+
+        .payment-message {
+            margin-top: 20px;
+
+            padding: 20px;
+
+            background: #fff8e6;
+
+            border-radius: 12px;
+
+            text-align: center;
+
+            border: 1px solid #f0d98c;
+        }
+
+        .payment-message h3 {
+            color: #6b1e1e;
+
+            margin-top: 0;
+
+            margin-bottom: 12px;
+        }
+
+        .payment-pending {
+            color: #d89b00;
+
+            font-size: 17px;
+
+            font-weight: bold;
+        }
+
+        .payment-message p {
+            margin: 9px 0;
+
+            color: #555;
+        }
+
+        /* ================================
+           ERROR
+        ================================= */
+
+        .error {
+            text-align: center;
+
+            color: #6b1e1e;
+
+            font-weight: bold;
+        }
+
+        /* ================================
+           MOBILE
+        ================================= */
+
+        @media (max-width: 600px) {
+
+            .bill-container {
+                width: 94%;
+
+                padding: 18px;
+
+                margin: 20px auto;
+            }
+
+            .bill-title {
+                font-size: 23px;
+            }
+
+            .bill-item {
+                padding: 12px;
+            }
+
+            .item-name {
+                font-size: 15px;
+            }
+
+            .item-details {
+                font-size: 12px;
+            }
+
+            .item-price {
+                font-size: 15px;
+            }
+
+            .bill-total {
+                font-size: 17px;
+            }
+
+            .bill-total strong {
+                font-size: 22px;
+            }
+
+            .payment-message {
+                padding: 17px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- ================================
+         HEADER
+    ================================= -->
+
+    <header>
+
+        <h1>🍽️ QResto</h1>
+
+        <p>Restaurant Bill</p>
+
+    </header>
+
+
+    <!-- ================================
+         BILL
+    ================================= -->
+
+    <div class="bill-container">
+
+
+        <h2 class="bill-title">
+            🧾 Bill Details
+        </h2>
+
+
+        <!-- ORDER INFORMATION -->
+
+        <div class="bill-info">
+
+            <p>
+                🧾 Order ID:
+                <strong id="order-id">
+                    Loading...
+                </strong>
+            </p>
+
+            <p>
+                🪑 Table:
+                <strong id="table-number">
+                    Loading...
+                </strong>
+            </p>
+
+        </div>
+
+
+        <!-- ORDERED ITEMS -->
+
+        <h3 class="items-title">
+            🍛 Ordered Items
+        </h3>
+
+
+        <div id="bill-items">
+
+            Loading items...
+
+        </div>
+
+
+        <!-- TOTAL -->
+
+        <div class="bill-total">
+
+            <span>
+                💰 Total Amount
+            </span>
+
+            <strong id="total-amount">
+                ₹0.00
+            </strong>
+
+        </div>
+
+
+        <!-- PAYMENT INFORMATION -->
+
+        <div class="payment-message">
+
+            <h3>
+                💵 Pay at Counter
+            </h3>
+
+            <p class="payment-pending">
+                🟡 Payment Pending
+            </p>
+
+            <p id="payment-text">
+                Please pay the bill at the
+                restaurant counter.
+            </p>
+
+            <p>
+                👨‍💼 Show this bill to the cashier.
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+    <script>
+
+
+        // ==========================================
+        // SERVER URL
+        // ==========================================
+
+        const SERVER_URL =
+            "http://10.29.95.40:3000";
+
+
+        // ==========================================
+        // GET ORDER ID FROM URL
+        // ==========================================
+
+        const urlParams =
+            new URLSearchParams(
+                window.location.search
+            );
+
+
+        const orderId =
+            urlParams.get("order");
+
+
+        // ==========================================
+        // LOAD BILL
+        // ==========================================
+
+        async function loadBill() {
+
+
+            if (!orderId) {
+
+                document.getElementById(
+                    "bill-items"
+                ).innerHTML = `
+
+                    <p class="error">
+                        ❌ Order ID not found
+                    </p>
+
+                `;
+
+                return;
+
+            }
+
+
+            try {
+
+
+                const response =
+                    await fetch(
+                        `${SERVER_URL}/api/orders/${orderId}`
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Order not found"
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (!data.success) {
+
+                    throw new Error(
+                        "Order not found"
+                    );
+
+                }
+
+
+                const order =
+                    data.order;
+
+
+                // ==========================================
+                // ORDER ID
+                // ==========================================
+
+                document.getElementById(
+                    "order-id"
+                ).textContent =
+                    "#" + order.id;
+
+
+                // ==========================================
+                // TABLE
+                // ==========================================
+
+                document.getElementById(
+                    "table-number"
+                ).textContent =
+                    order.table_number;
+
+
+                // ==========================================
+                // ITEMS
+                // ==========================================
+
+                let items = [];
+
+
+                if (
+                    typeof order.items ===
+                    "string"
+                ) {
+
+                    items =
+                        JSON.parse(order.items);
+
+                } else {
+
+                    items =
+                        order.items || [];
+
+                }
+
+
+                let itemsHTML = "";
+
+
+                items.forEach(item => {
+
+
+                    const quantity =
+                        Number(item.quantity) || 1;
+
+
+                    const price =
+                        Number(item.price) || 0;
+
+
+                    const itemTotal =
+                        price * quantity;
+
+
+                    itemsHTML += `
+
+                        <div class="bill-item">
+
+                            <div class="item-left">
+
+                                <div class="item-name">
+
+                                    ${item.name}
+
+                                </div>
+
+                                <div class="item-details">
+
+                                    ₹${price.toFixed(2)}
+                                    × ${quantity}
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="item-price">
+
+                                ₹${itemTotal.toFixed(2)}
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                });
+
+
+                // ==========================================
+                // DISPLAY ITEMS
+                // ==========================================
+
+                document.getElementById(
+                    "bill-items"
+                ).innerHTML =
+                    itemsHTML ||
+                    "<p>No items found.</p>";
+
+
+                // ==========================================
+                // TOTAL
+                // ==========================================
+
+                const total =
+                    Number(order.total) || 0;
+
+
+                document.getElementById(
+                    "total-amount"
+                ).textContent =
+                    "₹" + total.toFixed(2);
+
+
+                // ==========================================
+                // PAYMENT STATUS
+                // ==========================================
+
+                const paymentMessage =
+                    document.querySelector(
+                        ".payment-message"
+                    );
+
+
+                if (
+                    order.payment_status ===
+                    "Paid"
+                ) {
+
+
+                    paymentMessage.innerHTML = `
+
+                        <h3>
+                            💰 Payment Completed
+                        </h3>
+
+                        <p style="
+                            color: green;
+                            font-size: 17px;
+                            font-weight: bold;
+                        ">
+
+                            ✅ Payment Received
+
+                        </p>
+
+                        <p>
+
+                            Thank you!
+                            Your payment has been confirmed.
+
+                        </p>
+
+                    `;
+
+                }
+
+
+            }
+
+            catch (error) {
+
+
+                console.error(
+                    "❌ Bill loading error:",
+                    error
+                );
+
+
+                document.getElementById(
+                    "bill-items"
+                ).innerHTML = `
+
+                    <p class="error">
+
+                        ❌ Cannot load bill details
+
+                    </p>
+
+                `;
+
+            }
+
+        }
+
+
+        // ==========================================
+        // START
+        // ==========================================
+
+        loadBill();
+
+
+    </script>
+
+
+</body>
+
+</html>
