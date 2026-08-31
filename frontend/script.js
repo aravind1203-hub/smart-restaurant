@@ -1,23 +1,32 @@
 // ==========================================
-// SERVER URL
+// SMART RESTAURANT - CUSTOMER MENU
 // ==========================================
 
-// Automatically uses:
-// Local  → http://localhost:3000
-// Render → https://smart-restaurant-3axh.onrender.com
+// Automatically detects the current server.
+//
+// Local:
+// http://localhost:3000
+//
+// Render:
+// https://smart-restaurant-3axh.onrender.com
 
 const SERVER_URL = window.location.origin;
+
+console.log("🌐 SERVER URL:", SERVER_URL);
 
 
 // ==========================================
 // GET TABLE NUMBER FROM URL
 // ==========================================
 
-const urlParams =
-    new URLSearchParams(window.location.search);
+const urlParams = new URLSearchParams(
+    window.location.search
+);
 
 const tableNumber =
     urlParams.get("table") || "1";
+
+console.log("🪑 TABLE NUMBER:", tableNumber);
 
 
 // ==========================================
@@ -43,7 +52,14 @@ let cart = [];
 
 
 // ==========================================
-// TABLE AVAILABLE CHECK
+// TABLE STATUS
+// ==========================================
+
+let tableAvailable = true;
+
+
+// ==========================================
+// CHECK TABLE AVAILABILITY
 // ==========================================
 
 async function checkTableAvailability() {
@@ -54,11 +70,22 @@ async function checkTableAvailability() {
             `🔍 Checking Table ${tableNumber}...`
         );
 
+        const apiURL =
+            `${SERVER_URL}/api/tables/${tableNumber}`;
 
-        const response = await fetch(
+        console.log(
+            "📡 API:",
+            apiURL
+        );
 
-            `${SERVER_URL}/api/tables/${tableNumber}`
 
+        const response =
+            await fetch(apiURL);
+
+
+        console.log(
+            "📥 Response status:",
+            response.status
         );
 
 
@@ -73,13 +100,16 @@ async function checkTableAvailability() {
 
 
         // ==========================================
-        // SERVER ERROR
+        // SERVER / API ERROR
         // ==========================================
 
         if (!response.ok || !data.success) {
 
+            tableAvailable = false;
+
             console.error(
-                "❌ Table check failed"
+                "❌ Table API failed:",
+                data.message
             );
 
             return;
@@ -92,10 +122,13 @@ async function checkTableAvailability() {
 
 
         // ==========================================
-        // TABLE OCCUPIED
+        // OCCUPIED
         // ==========================================
 
         if (table.status === "Occupied") {
+
+            tableAvailable = false;
+
 
             alert(
 
@@ -108,143 +141,162 @@ async function checkTableAvailability() {
             );
 
 
-            // ==========================================
-            // DISABLE FOOD BUTTONS
-            // ==========================================
+            disableOrdering();
 
-            const foodButtons =
-                document.querySelectorAll(
-                    ".food-card button"
-                );
-
-
-            foodButtons.forEach(button => {
-
-                button.disabled = true;
-
-                button.textContent =
-                    "Table Unavailable";
-
-            });
-
-
-            // ==========================================
-            // DISABLE CART BUTTONS
-            // ==========================================
-
-            const cartButtons =
-                document.querySelectorAll(
-                    ".cart button"
-                );
-
-
-            cartButtons.forEach(button => {
-
-                button.disabled = true;
-
-            });
-
-
-            // ==========================================
-            // SHOW OCCUPIED MESSAGE
-            // ==========================================
-
-            const cartElement =
-                document.querySelector(".cart");
-
-
-            if (cartElement) {
-
-                // Avoid duplicate message
-                if (
-                    !document.getElementById(
-                        "occupied-message"
-                    )
-                ) {
-
-                    const message =
-                        document.createElement("div");
-
-
-                    message.id =
-                        "occupied-message";
-
-
-                    message.style.background =
-                        "#ffe5e5";
-
-
-                    message.style.color =
-                        "#b00000";
-
-
-                    message.style.padding =
-                        "15px";
-
-
-                    message.style.marginTop =
-                        "15px";
-
-
-                    message.style.borderRadius =
-                        "10px";
-
-
-                    message.style.textAlign =
-                        "center";
-
-
-                    message.style.fontWeight =
-                        "bold";
-
-
-                    message.innerHTML =
-
-                        `🔴 Table ${tableNumber} is occupied.<br>` +
-
-                        `❌ Seat not available.`;
-
-
-                    cartElement.appendChild(
-                        message
-                    );
-
-                }
-
-            }
+            showOccupiedMessage();
 
         }
 
 
         // ==========================================
-        // TABLE AVAILABLE
+        // AVAILABLE
         // ==========================================
 
         else if (
             table.status === "Available"
         ) {
 
+            tableAvailable = true;
+
             console.log(
-
                 `🟢 Table ${tableNumber} is available`
-
             );
 
         }
 
     }
 
-
     catch (error) {
 
+        tableAvailable = false;
+
         console.error(
-
-            "❌ Table availability error:",
+            "❌ Table connection error:",
             error
-
         );
 
     }
+
+}
+
+
+// ==========================================
+// DISABLE ORDERING
+// ==========================================
+
+function disableOrdering() {
+
+    // Food buttons
+
+    const foodButtons =
+        document.querySelectorAll(
+            ".food-card button"
+        );
+
+
+    foodButtons.forEach(button => {
+
+        button.disabled = true;
+
+        button.textContent =
+            "Table Unavailable";
+
+    });
+
+
+    // Cart buttons
+
+    const cartButtons =
+        document.querySelectorAll(
+            ".cart button"
+        );
+
+
+    cartButtons.forEach(button => {
+
+        button.disabled = true;
+
+    });
+
+}
+
+
+// ==========================================
+// SHOW OCCUPIED MESSAGE
+// ==========================================
+
+function showOccupiedMessage() {
+
+    const cartElement =
+        document.querySelector(".cart");
+
+
+    if (!cartElement) {
+
+        return;
+
+    }
+
+
+    // Avoid duplicate message
+
+    if (
+        document.getElementById(
+            "occupied-message"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const message =
+        document.createElement("div");
+
+
+    message.id =
+        "occupied-message";
+
+
+    message.style.background =
+        "#ffe5e5";
+
+
+    message.style.color =
+        "#b00000";
+
+
+    message.style.padding =
+        "15px";
+
+
+    message.style.marginTop =
+        "15px";
+
+
+    message.style.borderRadius =
+        "10px";
+
+
+    message.style.textAlign =
+        "center";
+
+
+    message.style.fontWeight =
+        "bold";
+
+
+    message.innerHTML =
+
+        `🔴 Table ${tableNumber} is occupied.<br>` +
+
+        `❌ Seat not available.`;
+
+
+    cartElement.appendChild(
+        message
+    );
 
 }
 
@@ -261,6 +313,19 @@ checkTableAvailability();
 // ==========================================
 
 function addToCart(name, price) {
+
+    // Don't allow ordering if table unavailable
+
+    if (!tableAvailable) {
+
+        alert(
+            `🔴 Table ${tableNumber} is not available.`
+        );
+
+        return;
+
+    }
+
 
     const existingItem =
         cart.find(
@@ -279,7 +344,9 @@ function addToCart(name, price) {
         cart.push({
 
             name: name,
+
             price: Number(price),
+
             quantity: 1
 
         });
@@ -298,6 +365,13 @@ function addToCart(name, price) {
 
 function increaseQuantity(index) {
 
+    if (!tableAvailable) {
+
+        return;
+
+    }
+
+
     if (!cart[index]) {
 
         return;
@@ -306,6 +380,7 @@ function increaseQuantity(index) {
 
 
     cart[index].quantity++;
+
 
     updateCart();
 
@@ -328,7 +403,9 @@ function decreaseQuantity(index) {
     cart[index].quantity--;
 
 
-    if (cart[index].quantity <= 0) {
+    if (
+        cart[index].quantity <= 0
+    ) {
 
         cart.splice(index, 1);
 
@@ -355,6 +432,7 @@ function removeItem(index) {
 
     cart.splice(index, 1);
 
+
     updateCart();
 
 }
@@ -367,14 +445,21 @@ function removeItem(index) {
 function updateCart() {
 
     const cartItems =
-        document.getElementById("cart-items");
+        document.getElementById(
+            "cart-items"
+        );
 
 
     const totalElement =
-        document.getElementById("total");
+        document.getElementById(
+            "total"
+        );
 
 
-    if (!cartItems || !totalElement) {
+    if (
+        !cartItems ||
+        !totalElement
+    ) {
 
         return;
 
@@ -416,7 +501,6 @@ function updateCart() {
 
                 </button>
 
-
                 <span
                     style="margin: 0 10px;">
 
@@ -424,14 +508,12 @@ function updateCart() {
 
                 </span>
 
-
                 <button
                     onclick="increaseQuantity(${index})">
 
                     +
 
                 </button>
-
 
                 <button
                     onclick="removeItem(${index})">
@@ -460,6 +542,22 @@ function updateCart() {
 // ==========================================
 
 async function placeOrder() {
+
+    // ==========================================
+    // CHECK TABLE
+    // ==========================================
+
+    if (!tableAvailable) {
+
+        alert(
+
+            `🔴 Table ${tableNumber} is not available.`
+
+        );
+
+        return;
+
+    }
 
 
     // ==========================================
@@ -495,9 +593,13 @@ async function placeOrder() {
 
     try {
 
+        const apiURL =
+            `${SERVER_URL}/api/orders`;
+
+
         console.log(
             "📡 Sending order to:",
-            SERVER_URL
+            apiURL
         );
 
 
@@ -505,33 +607,44 @@ async function placeOrder() {
         // SEND ORDER
         // ==========================================
 
-        const response = await fetch(
+        const response =
+            await fetch(
 
-            `${SERVER_URL}/api/orders`,
+                apiURL,
 
-            {
+                {
 
-                method: "POST",
+                    method: "POST",
 
-                headers: {
+                    headers: {
 
-                    "Content-Type":
-                        "application/json"
+                        "Content-Type":
+                            "application/json"
 
-                },
+                    },
 
-                body: JSON.stringify({
+                    body:
+                        JSON.stringify({
 
-                    table: tableNumber,
+                            table:
+                                tableNumber,
 
-                    items: cart,
+                            items:
+                                cart,
 
-                    total: total
+                            total:
+                                total
 
-                })
+                        })
 
-            }
+                }
 
+            );
+
+
+        console.log(
+            "📥 Order response:",
+            response.status
         );
 
 
@@ -544,7 +657,7 @@ async function placeOrder() {
 
 
         console.log(
-            "📥 Server response:",
+            "📦 Server data:",
             data
         );
 
@@ -553,17 +666,23 @@ async function placeOrder() {
         // TABLE OCCUPIED
         // ==========================================
 
-        if (response.status === 409) {
+        if (
+            response.status === 409
+        ) {
+
+            tableAvailable = false;
+
 
             alert(
 
-                `🪑 TABLE ${tableNumber} IS ALREADY OCCUPIED!\n\n` +
+                `🔴 TABLE ${tableNumber} IS ALREADY OCCUPIED!\n\n` +
 
-                `❌ Seat not available.\n\n` +
-
-                `Please choose another table.`
+                `❌ Seat not available.`
 
             );
+
+
+            disableOrdering();
 
 
             return;
@@ -572,7 +691,7 @@ async function placeOrder() {
 
 
         // ==========================================
-        // OTHER SERVER ERROR
+        // SERVER ERROR
         // ==========================================
 
         if (!response.ok) {
@@ -582,11 +701,8 @@ async function placeOrder() {
                 "❌ " +
 
                 (
-
                     data.message ||
-
                     `Server error: ${response.status}`
-
                 )
 
             );
@@ -616,17 +732,16 @@ async function placeOrder() {
             );
 
 
-            // ==========================================
-            // CLEAR CART
-            // ==========================================
+            // Clear cart
 
             cart = [];
+
 
             updateCart();
 
 
             // ==========================================
-            // GO TO ORDER STATUS
+            // ORDER STATUS PAGE
             // ==========================================
 
             window.location.href =
@@ -635,7 +750,6 @@ async function placeOrder() {
 
         }
 
-
         else {
 
             alert(
@@ -643,11 +757,8 @@ async function placeOrder() {
                 "❌ " +
 
                 (
-
                     data.message ||
-
                     "Order could not be placed!"
-
                 )
 
             );
@@ -664,10 +775,8 @@ async function placeOrder() {
     catch (error) {
 
         console.error(
-
-            "❌ Order error:",
+            "❌ ORDER CONNECTION ERROR:",
             error
-
         );
 
 
@@ -675,7 +784,9 @@ async function placeOrder() {
 
             "❌ Cannot connect to restaurant server!\n\n" +
 
-            "Please check your internet connection or server."
+            `Server: ${SERVER_URL}\n\n` +
+
+            "Please check your internet connection."
 
         );
 

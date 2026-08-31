@@ -20,6 +20,7 @@
             margin: 0;
             font-family: Arial, sans-serif;
             background: #f6f1e8;
+            color: #222;
         }
 
         header {
@@ -31,6 +32,12 @@
 
         header h1 {
             margin: 0;
+            font-size: 30px;
+        }
+
+        header p {
+            margin: 8px 0 0;
+            font-size: 15px;
         }
 
         .container {
@@ -43,6 +50,17 @@
             color: #6b1e1e;
             text-align: center;
             margin-bottom: 25px;
+        }
+
+        .server-status {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 12px;
+            border-radius: 10px;
+            background: white;
+            font-weight: bold;
+            box-shadow:
+                0 3px 10px rgba(0, 0, 0, 0.08);
         }
 
         .payments {
@@ -60,6 +78,8 @@
 
             box-shadow:
                 0 5px 15px rgba(0, 0, 0, 0.15);
+
+            border-top: 5px solid #d89b00;
         }
 
         .payment-card h2 {
@@ -67,14 +87,23 @@
             color: #6b1e1e;
         }
 
+        .payment-card p {
+            line-height: 1.6;
+        }
+
         .items {
             padding-left: 20px;
             line-height: 1.8;
         }
 
+        .items li {
+            margin-bottom: 5px;
+        }
+
         .total {
             font-size: 20px;
             font-weight: bold;
+            color: #6b1e1e;
         }
 
         .payment-status {
@@ -97,10 +126,17 @@
             font-weight: bold;
 
             cursor: pointer;
+
+            transition: 0.2s;
         }
 
         button:hover {
             background: #b77d00;
+        }
+
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
         }
 
         .empty {
@@ -109,6 +145,46 @@
             font-weight: bold;
             color: #6b1e1e;
             padding: 30px;
+
+            background: white;
+            border-radius: 15px;
+        }
+
+        .error {
+            text-align: center;
+            color: #b00000;
+            font-weight: bold;
+            padding: 30px;
+            background: #ffe5e5;
+            border-radius: 15px;
+        }
+
+        .refresh-info {
+            text-align: center;
+            color: #777;
+            margin-top: 25px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                width: 94%;
+                margin: 20px auto;
+            }
+
+            header {
+                padding: 20px 15px;
+            }
+
+            header h1 {
+                font-size: 25px;
+            }
+
+            .payment-card {
+                padding: 18px;
+            }
+
         }
 
     </style>
@@ -118,21 +194,53 @@
 
 <body>
 
+
+    <!-- ==========================================
+         HEADER
+    ========================================== -->
+
     <header>
 
-        <h1>💰 QResto Cashier</h1>
+        <h1>
+            💰 QResto Cashier
+        </h1>
 
-        <p>Payment Dashboard</p>
+        <p>
+            Payment Dashboard
+        </p>
 
     </header>
 
 
+    <!-- ==========================================
+         MAIN CONTAINER
+    ========================================== -->
+
     <div class="container">
+
 
         <h2>
             💵 Pending Payments
         </h2>
 
+
+        <!-- ==========================================
+             SERVER STATUS
+        ========================================== -->
+
+        <div
+            class="server-status"
+            id="server-status"
+        >
+
+            🔄 Connecting to server...
+
+        </div>
+
+
+        <!-- ==========================================
+             PAYMENTS
+        ========================================== -->
 
         <div
             class="payments"
@@ -140,22 +248,106 @@
         >
 
             <p class="empty">
-                Loading payments...
+
+                🔄 Loading payments...
+
             </p>
 
         </div>
+
+
+        <p class="refresh-info">
+
+            🔄 Payments automatically refresh every 5 seconds
+
+        </p>
+
 
     </div>
 
 
     <script>
 
+
         // ==========================================
         // SERVER URL
         // ==========================================
 
+        /*
+            IMPORTANT:
+
+            Local:
+            http://localhost:3000
+
+            Render:
+            https://smart-restaurant-3axh.onrender.com
+
+            Because frontend and backend are hosted
+            from the same server, we use:
+
+            window.location.origin
+        */
+
         const SERVER_URL =
-            "http://10.29.95.40:3000";
+            window.location.origin;
+
+
+        console.log(
+            "🌐 SERVER URL:",
+            SERVER_URL
+        );
+
+
+        // ==========================================
+        // SERVER STATUS
+        // ==========================================
+
+        function setServerStatus(
+            connected,
+            message
+        ) {
+
+            const status =
+                document.getElementById(
+                    "server-status"
+                );
+
+
+            if (!status) {
+
+                return;
+
+            }
+
+
+            if (connected) {
+
+                status.style.background =
+                    "#e5ffe5";
+
+                status.style.color =
+                    "#087f23";
+
+                status.textContent =
+                    "🟢 Server Connected";
+
+            }
+
+            else {
+
+                status.style.background =
+                    "#ffe5e5";
+
+                status.style.color =
+                    "#b00000";
+
+                status.textContent =
+                    message ||
+                    "🔴 Server Connection Failed";
+
+            }
+
+        }
 
 
         // ==========================================
@@ -164,38 +356,94 @@
 
         async function loadPayments() {
 
+            const container =
+                document.getElementById(
+                    "payments"
+                );
+
+
             try {
+
+                console.log(
+                    "📡 Loading pending payments..."
+                );
+
+                console.log(
+                    "📡 API:",
+                    `${SERVER_URL}/api/payments/pending`
+                );
+
 
                 const response =
                     await fetch(
-                        `${SERVER_URL}/api/payments/pending`
+
+                        `${SERVER_URL}/api/payments/pending`,
+
+                        {
+
+                            method: "GET",
+
+                            headers: {
+
+                                "Accept":
+                                    "application/json"
+
+                            },
+
+                            cache: "no-store"
+
+                        }
+
                     );
 
 
-                if (!response.ok) {
-
-                    throw new Error(
-                        "Server error"
-                    );
-
-                }
+                console.log(
+                    "📥 Response status:",
+                    response.status
+                );
 
 
                 const data =
                     await response.json();
 
 
-                const container =
-                    document.getElementById(
-                        "payments"
-                    );
-
-
-                container.innerHTML = "";
+                console.log(
+                    "📥 Payment response:",
+                    data
+                );
 
 
                 // ==========================================
-                // NO PAYMENTS
+                // SERVER ERROR
+                // ==========================================
+
+                if (!response.ok) {
+
+                    throw new Error(
+
+                        data.message ||
+                        `Server error: ${response.status}`
+
+                    );
+
+                }
+
+
+                // ==========================================
+                // CONNECTION SUCCESS
+                // ==========================================
+
+                setServerStatus(
+                    true
+                );
+
+
+                container.innerHTML =
+                    "";
+
+
+                // ==========================================
+                // NO PENDING PAYMENTS
                 // ==========================================
 
                 if (
@@ -222,124 +470,196 @@
                 // DISPLAY PAYMENTS
                 // ==========================================
 
-                data.orders.forEach(order => {
+                data.orders.forEach(
+                    order => {
 
 
-                    let items = [];
+                        // ==========================================
+                        // PARSE ITEMS
+                        // ==========================================
+
+                        let items = [];
 
 
-                    if (
-                        typeof order.items ===
-                        "string"
-                    ) {
+                        try {
 
-                        items =
-                            JSON.parse(order.items);
+                            if (
+                                typeof order.items ===
+                                "string"
+                            ) {
 
-                    }
+                                items =
+                                    JSON.parse(
+                                        order.items
+                                    );
 
-                    else {
+                            }
 
-                        items =
-                            order.items;
+                            else {
 
-                    }
+                                items =
+                                    order.items ||
+                                    [];
+
+                            }
+
+                        }
+
+                        catch (itemError) {
+
+                            console.error(
+                                "❌ Item JSON error:",
+                                itemError
+                            );
+
+                            items = [];
+
+                        }
 
 
-                    let itemsHTML = "";
+                        // ==========================================
+                        // ITEMS HTML
+                        // ==========================================
+
+                        let itemsHTML = "";
 
 
-                    items.forEach(item => {
+                        items.forEach(
+                            item => {
 
-                        itemsHTML += `
 
-                            <li>
+                                const quantity =
+                                    Number(
+                                        item.quantity
+                                    ) || 1;
 
-                                ${item.name}
 
-                                × ${item.quantity}
+                                const price =
+                                    Number(
+                                        item.price
+                                    ) || 0;
 
-                                - ₹${
 
-                                    item.price *
-                                    item.quantity
+                                const itemTotal =
+                                    price *
+                                    quantity;
 
-                                }
 
-                            </li>
+                                itemsHTML += `
+
+                                    <li>
+
+                                        ${escapeHTML(
+                                            item.name
+                                        )}
+
+                                        × ${quantity}
+
+                                        -
+
+                                        ₹${itemTotal.toFixed(2)}
+
+                                    </li>
+
+                                `;
+
+                            }
+                        );
+
+
+                        // ==========================================
+                        // CARD
+                        // ==========================================
+
+                        container.innerHTML += `
+
+                            <div
+                                class="payment-card"
+                            >
+
+                                <h2>
+
+                                    🧾 Order #${order.id}
+
+                                </h2>
+
+
+                                <p>
+
+                                    🪑 Table:
+
+                                    <strong>
+
+                                        ${order.table_number}
+
+                                    </strong>
+
+                                </p>
+
+
+                                <h3>
+
+                                    🍛 Items
+
+                                </h3>
+
+
+                                <ul
+                                    class="items"
+                                >
+
+                                    ${
+                                        itemsHTML ||
+                                        "<li>No items found</li>"
+                                    }
+
+                                </ul>
+
+
+                                <p
+                                    class="total"
+                                >
+
+                                    💰 Total:
+
+                                    ₹${Number(
+                                        order.total
+                                    ).toFixed(2)}
+
+                                </p>
+
+
+                                <p
+                                    class="payment-status"
+                                >
+
+                                    💵 Payment:
+
+                                    ${
+                                        order.payment_status
+                                    }
+
+                                </p>
+
+
+                                <button
+                                    onclick="
+                                        receivePayment(
+                                            ${order.id}
+                                        )
+                                    "
+                                >
+
+                                    💵 Receive Payment
+
+                                </button>
+
+                            </div>
 
                         `;
 
-                    });
-
-
-                    container.innerHTML += `
-
-                        <div class="payment-card">
-
-                            <h2>
-
-                                🧾 Order #${order.id}
-
-                            </h2>
-
-
-                            <p>
-
-                                🪑 Table:
-
-                                <strong>
-                                    ${order.table_number}
-                                </strong>
-
-                            </p>
-
-
-                            <h3>
-                                🍛 Items
-                            </h3>
-
-
-                            <ul class="items">
-
-                                ${itemsHTML}
-
-                            </ul>
-
-
-                            <p class="total">
-
-                                💰 Total:
-                                ₹${order.total}
-
-                            </p>
-
-
-                            <p class="payment-status">
-
-                                Payment:
-                                ${order.payment_status}
-
-                            </p>
-
-
-                            <button
-                                onclick="
-                                    receivePayment(
-                                        ${order.id}
-                                    )
-                                "
-                            >
-
-                                💵 Receive Payment
-
-                            </button>
-
-                        </div>
-
-                    `;
-
-                });
+                    }
+                );
 
             }
 
@@ -352,15 +672,31 @@
                 );
 
 
-                document.getElementById(
-                    "payments"
-                ).innerHTML = `
+                setServerStatus(
+                    false,
+                    "🔴 Cannot connect to restaurant server"
+                );
 
-                    <p class="empty">
+
+                container.innerHTML = `
+
+                    <div class="error">
 
                         ❌ Cannot connect to server
 
-                    </p>
+                        <br><br>
+
+                        Please check the backend server.
+
+                        <br><br>
+
+                        <small>
+
+                            ${error.message}
+
+                        </small>
+
+                    </div>
 
                 `;
 
@@ -373,7 +709,9 @@
         // RECEIVE PAYMENT
         // ==========================================
 
-        async function receivePayment(orderId) {
+        async function receivePayment(
+            orderId
+        ) {
 
 
             const confirmPayment =
@@ -381,7 +719,9 @@
 
                     `💰 Confirm payment received?\n\n` +
 
-                    `Order ID: #${orderId}`
+                    `🧾 Order ID: #${orderId}\n\n` +
+
+                    `Click OK after receiving cash.`
 
                 );
 
@@ -396,6 +736,12 @@
             try {
 
 
+                console.log(
+                    "💰 Processing payment:",
+                    orderId
+                );
+
+
                 const response =
                     await fetch(
 
@@ -408,6 +754,9 @@
                             headers: {
 
                                 "Content-Type":
+                                    "application/json",
+
+                                "Accept":
                                     "application/json"
 
                             }
@@ -417,25 +766,65 @@
                     );
 
 
+                console.log(
+                    "📥 Payment status:",
+                    response.status
+                );
+
+
                 const data =
                     await response.json();
 
 
-                if (data.success) {
+                console.log(
+                    "📥 Payment response:",
+                    data
+                );
+
+
+                // ==========================================
+                // PAYMENT SUCCESS
+                // ==========================================
+
+                if (
+                    response.ok &&
+                    data.success
+                ) {
 
                     alert(
-                        "✅ Payment received successfully!"
+
+                        `✅ Payment received successfully!\n\n` +
+
+                        `🧾 Order: #${orderId}\n` +
+
+                        `🪑 Table: ${data.table}\n\n` +
+
+                        `🟢 Table is now Available`
+
                     );
 
 
-                    loadPayments();
+                    // Reload payment list
+                    await loadPayments();
+
 
                 }
+
+                // ==========================================
+                // PAYMENT ERROR
+                // ==========================================
 
                 else {
 
                     alert(
-                        "❌ Payment update failed!"
+
+                        "❌ Payment update failed!\n\n" +
+
+                        (
+                            data.message ||
+                            "Unknown server error"
+                        )
+
                     );
 
                 }
@@ -452,10 +841,62 @@
 
 
                 alert(
-                    "❌ Cannot connect to server!"
+
+                    "❌ Cannot connect to restaurant server!\n\n" +
+
+                    error.message
+
                 );
 
             }
+
+        }
+
+
+        // ==========================================
+        // ESCAPE HTML
+        // ==========================================
+
+        function escapeHTML(
+            value
+        ) {
+
+            if (
+                value === null ||
+                value === undefined
+            ) {
+
+                return "";
+
+            }
+
+
+            return String(value)
+
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
+
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
+
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
+
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
+
+                .replace(
+                    /'/g,
+                    "&#039;"
+                );
 
         }
 
@@ -479,7 +920,9 @@
 
         );
 
+
     </script>
+
 
 </body>
 

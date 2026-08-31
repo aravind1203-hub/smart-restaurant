@@ -33,6 +33,10 @@
             margin: 0;
         }
 
+        header p {
+            margin: 7px 0 0;
+        }
+
         .container {
             width: 90%;
             max-width: 1200px;
@@ -74,10 +78,21 @@
         .total {
             font-size: 20px;
             font-weight: bold;
+            color: #6b1e1e;
         }
 
         .status {
             font-weight: bold;
+            padding: 10px;
+            border-radius: 8px;
+            background: #faf7f1;
+        }
+
+        .payment {
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 8px;
+            background: #faf7f1;
         }
 
         .no-orders {
@@ -87,12 +102,61 @@
             padding: 30px;
         }
 
+        .error {
+            color: #b00000;
+        }
+
+        .refresh-btn {
+            display: block;
+            width: 220px;
+            margin: 0 auto 25px auto;
+
+            padding: 12px;
+
+            border: none;
+            border-radius: 10px;
+
+            background: #d89b00;
+            color: white;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .refresh-btn:hover {
+            background: #b77d00;
+        }
+
+        .order-date {
+            font-size: 13px;
+            color: #777;
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                width: 94%;
+            }
+
+            .orders {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
     </style>
 
 </head>
 
 
 <body>
+
+
+    <!-- ==========================================
+         HEADER
+    =========================================== -->
 
     <header>
 
@@ -103,13 +167,42 @@
     </header>
 
 
+    <!-- ==========================================
+         MAIN CONTAINER
+    =========================================== -->
+
     <div class="container">
 
-        <h2>🧾 All Orders</h2>
+        <h2>
+            🧾 All Orders
+        </h2>
+
+
+        <!-- REFRESH BUTTON -->
+
+        <button
+            class="refresh-btn"
+            onclick="loadOrderHistory()"
+        >
+
+            🔄 Refresh Orders
+
+        </button>
+
+
+        <!-- ORDERS -->
 
         <div
             class="orders"
-            id="orders">
+            id="orders"
+        >
+
+            <div class="no-orders">
+
+                ⏳ Loading orders...
+
+            </div>
+
         </div>
 
     </div>
@@ -117,34 +210,156 @@
 
     <script>
 
+
+        // ==========================================
+        // SERVER URL
+        // ==========================================
+
+        // Local:
+        // http://localhost:3000
+        //
+        // Render:
+        // https://smart-restaurant-3axh.onrender.com
+        //
+        // Automatically detects current server.
+
+        const SERVER_URL =
+            window.location.origin;
+
+
+        console.log(
+            "🌐 Server URL:",
+            SERVER_URL
+        );
+
+
         // ==========================================
         // LOAD ORDER HISTORY
         // ==========================================
 
         async function loadOrderHistory() {
 
+            const ordersContainer =
+                document.getElementById("orders");
+
+
+            // Loading message
+
+            ordersContainer.innerHTML = `
+
+                <div class="no-orders">
+
+                    ⏳ Loading orders...
+
+                </div>
+
+            `;
+
+
             try {
 
-                const response = await fetch(
-                    "http://localhost:3000/api/orders"
+
+                console.log(
+                    "📡 Requesting orders from:",
+                    `${SERVER_URL}/api/orders`
                 );
+
+
+                // ==========================================
+                // GET ORDERS
+                // ==========================================
+
+                const response =
+                    await fetch(
+
+                        `${SERVER_URL}/api/orders`,
+
+                        {
+
+                            method: "GET",
+
+                            headers: {
+
+                                "Accept":
+                                    "application/json"
+
+                            }
+
+                        }
+
+                    );
+
+
+                console.log(
+                    "📥 Server status:",
+                    response.status
+                );
+
+
+                // ==========================================
+                // SERVER ERROR
+                // ==========================================
 
                 if (!response.ok) {
 
                     throw new Error(
-                        "Server response error"
+                        `Server returned ${response.status}`
                     );
 
                 }
 
+
+                // ==========================================
+                // READ RESPONSE
+                // ==========================================
+
                 const data =
                     await response.json();
 
-                const ordersContainer =
-                    document.getElementById("orders");
+
+                console.log(
+                    "📦 Orders received:",
+                    data
+                );
+
+
+                // ==========================================
+                // CLEAR CONTAINER
+                // ==========================================
 
                 ordersContainer.innerHTML = "";
 
+
+                // ==========================================
+                // CHECK SUCCESS
+                // ==========================================
+
+                if (!data.success) {
+
+                    ordersContainer.innerHTML = `
+
+                        <div class="no-orders error">
+
+                            ❌ ${
+
+                                data.message ||
+
+                                "Could not load orders"
+
+                            }
+
+                        </div>
+
+                    `;
+
+                    return;
+
+                }
+
+
+                // ==========================================
+                // NO ORDERS
+                // ==========================================
 
                 if (
                     !data.orders ||
@@ -152,89 +367,269 @@
                 ) {
 
                     ordersContainer.innerHTML = `
+
                         <div class="no-orders">
+
                             📋 No orders found
+
                         </div>
+
                     `;
 
                     return;
+
                 }
 
 
-                // Display all orders
+                // ==========================================
+                // DISPLAY ORDERS
+                // ==========================================
 
                 data.orders.forEach(order => {
+
+
+                    // ==========================================
+                    // ITEMS
+                    // ==========================================
 
                     let items = [];
 
 
                     try {
 
-                        items =
-                            typeof order.items === "string"
-                                ? JSON.parse(order.items)
-                                : order.items;
+                        if (
+                            typeof order.items ===
+                            "string"
+                        ) {
+
+                            items =
+                                JSON.parse(
+                                    order.items
+                                );
+
+                        }
+
+                        else {
+
+                            items =
+                                order.items || [];
+
+                        }
 
                     }
 
                     catch (error) {
 
                         console.error(
-                            "❌ Items error:",
+                            "❌ Items JSON error:",
                             error
                         );
 
+                        items = [];
+
                     }
 
+
+                    // ==========================================
+                    // ITEMS HTML
+                    // ==========================================
 
                     let itemsHTML = "";
 
 
                     items.forEach(item => {
 
+
+                        const quantity =
+                            Number(
+                                item.quantity
+                            ) || 1;
+
+
+                        const price =
+                            Number(
+                                item.price
+                            ) || 0;
+
+
+                        const itemTotal =
+                            price * quantity;
+
+
                         itemsHTML += `
+
                             <li>
-                                ${item.name}
-                                × ${item.quantity}
-                                - ₹${item.price}
+
+                                <strong>
+                                    ${item.name}
+                                </strong>
+
+                                × ${quantity}
+
+                                -
+
+                                ₹${itemTotal.toFixed(2)}
+
                             </li>
+
                         `;
 
                     });
 
 
-                    const status =
-                        order.status || "Pending";
+                    // ==========================================
+                    // STATUS
+                    // ==========================================
 
+                    const status =
+                        order.status ||
+                        "Pending";
+
+
+                    // ==========================================
+                    // PAYMENT STATUS
+                    // ==========================================
+
+                    const paymentStatus =
+                        order.payment_status ||
+                        "Pending";
+
+
+                    // ==========================================
+                    // TOTAL
+                    // ==========================================
+
+                    const total =
+                        Number(order.total) || 0;
+
+
+                    // ==========================================
+                    // CREATED DATE
+                    // ==========================================
+
+                    let createdDate = "";
+
+
+                    if (order.created_at) {
+
+                        try {
+
+                            createdDate =
+                                new Date(
+                                    order.created_at
+                                ).toLocaleString();
+
+                        }
+
+                        catch (error) {
+
+                            createdDate =
+                                order.created_at;
+
+                        }
+
+                    }
+
+
+                    // ==========================================
+                    // CREATE ORDER CARD
+                    // ==========================================
 
                     ordersContainer.innerHTML += `
 
                         <div class="order-card">
 
+
                             <h2>
+
                                 🧾 Order #${order.id}
+
                             </h2>
 
+
                             <p>
+
                                 🪑 Table:
+
                                 <strong>
+
                                     ${order.table_number}
+
                                 </strong>
+
                             </p>
+
+
+                            ${
+                                createdDate
+
+                                ? `
+
+                                    <p class="order-date">
+
+                                        📅 ${createdDate}
+
+                                    </p>
+
+                                `
+
+                                : ""
+
+                            }
+
+
+                            <h3>
+
+                                🍛 Ordered Items
+
+                            </h3>
+
 
                             <ul>
-                                ${itemsHTML}
+
+                                ${
+                                    itemsHTML ||
+
+                                    "<li>No items found</li>"
+                                }
+
                             </ul>
 
+
                             <p class="total">
-                                Total:
-                                ₹${order.total}
+
+                                💰 Total:
+
+                                ₹${total.toFixed(2)}
+
                             </p>
 
+
                             <p class="status">
-                                Status:
-                                ${status}
+
+                                📌 Order Status:
+
+                                <strong>
+
+                                    ${status}
+
+                                </strong>
+
                             </p>
+
+
+                            <p class="payment">
+
+                                💵 Payment:
+
+                                <strong>
+
+                                    ${paymentStatus}
+
+                                </strong>
+
+                            </p>
+
 
                         </div>
 
@@ -242,22 +637,49 @@
 
                 });
 
+
             }
 
+
+            // ==========================================
+            // CONNECTION ERROR
+            // ==========================================
+
             catch (error) {
+
 
                 console.error(
                     "❌ Cannot load order history:",
                     error
                 );
 
-                document.getElementById(
-                    "orders"
-                ).innerHTML = `
 
-                    <div class="no-orders">
-                        ❌ Cannot connect
-                        to restaurant server
+                ordersContainer.innerHTML = `
+
+                    <div class="no-orders error">
+
+                        ❌ Cannot connect to restaurant server
+
+                        <br><br>
+
+                        <small>
+
+                            Server:
+                            ${SERVER_URL}
+
+                        </small>
+
+                        <br><br>
+
+                        <button
+                            class="refresh-btn"
+                            onclick="loadOrderHistory()"
+                        >
+
+                            🔄 Try Again
+
+                        </button>
+
                     </div>
 
                 `;
@@ -267,11 +689,28 @@
         }
 
 
-        // Load history
+        // ==========================================
+        // FIRST LOAD
+        // ==========================================
 
         loadOrderHistory();
 
+
+        // ==========================================
+        // AUTO REFRESH
+        // ==========================================
+
+        setInterval(
+
+            loadOrderHistory,
+
+            5000
+
+        );
+
+
     </script>
+
 
 </body>
 

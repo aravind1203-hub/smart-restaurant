@@ -8,6 +8,7 @@
     <title>QResto - Kitchen Dashboard</title>
 
     <style>
+
         * {
             box-sizing: border-box;
         }
@@ -58,7 +59,9 @@
             background: white;
             padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.15);
         }
 
         .order-card h2 {
@@ -79,12 +82,16 @@
         button {
             width: 100%;
             padding: 12px;
+
             border: none;
             border-radius: 10px;
+
             background: #d89b00;
             color: white;
+
             font-size: 16px;
             font-weight: bold;
+
             cursor: pointer;
         }
 
@@ -103,13 +110,25 @@
             color: #666;
             padding: 30px;
         }
+
+        .server-info {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #777;
+        }
+
     </style>
+
 </head>
 
 
 <body>
 
-    <!-- Header -->
+
+    <!-- ==========================================
+         HEADER
+    ========================================== -->
 
     <header>
 
@@ -120,101 +139,247 @@
     </header>
 
 
-    <!-- Main Container -->
+    <!-- ==========================================
+         MAIN CONTAINER
+    ========================================== -->
 
     <div class="container">
 
-        <h2>🆕 New Orders</h2>
+        <h2>
+            🆕 New Orders
+        </h2>
 
-        <!-- Orders will appear here -->
 
-        <div class="orders" id="orders"></div>
+        <div
+            class="orders"
+            id="orders"
+        >
+
+            <div class="no-orders">
+                Loading orders...
+            </div>
+
+        </div>
+
+
+        <div
+            class="server-info"
+            id="server-info"
+        ></div>
 
     </div>
 
 
-    <!-- JavaScript -->
+    <!-- ==========================================
+         JAVASCRIPT
+    ========================================== -->
 
     <script>
 
+
         // ==========================================
-        // LOAD ORDERS FROM BACKEND
+        // SERVER URL
+        // ==========================================
+
+        /*
+            Local:
+            http://localhost:3000
+
+            Render:
+            https://smart-restaurant-3axh.onrender.com
+
+            Same server frontend + backend என்பதால்
+            window.location.origin use செய்கிறோம்.
+        */
+
+        const SERVER_URL =
+            window.location.origin;
+
+
+        console.log(
+            "🌐 SERVER URL:",
+            SERVER_URL
+        );
+
+
+        // Show server URL
+
+        document.getElementById(
+            "server-info"
+        ).textContent =
+            `Server: ${SERVER_URL}`;
+
+
+        // ==========================================
+        // LOAD ORDERS
         // ==========================================
 
         async function loadOrders() {
 
+            const ordersContainer =
+                document.getElementById(
+                    "orders"
+                );
+
+
             try {
 
-                const response = await fetch(
-                    "http://localhost:3000/api/orders"
+                console.log(
+                    "📡 Loading orders..."
                 );
+
+
+                const response =
+                    await fetch(
+                        `${SERVER_URL}/api/orders`,
+                        {
+                            method: "GET",
+
+                            headers: {
+                                "Accept":
+                                    "application/json"
+                            },
+
+                            cache: "no-store"
+                        }
+                    );
+
+
+                console.log(
+                    "📥 Orders response:",
+                    response.status
+                );
+
+
+                // ==========================================
+                // SERVER ERROR
+                // ==========================================
 
                 if (!response.ok) {
 
                     throw new Error(
-                        "Server returned an error"
+                        `Server error: ${response.status}`
                     );
 
                 }
 
-                const data = await response.json();
 
-                console.log("Orders received:", data);
+                // ==========================================
+                // READ JSON
+                // ==========================================
 
-                const ordersContainer =
-                    document.getElementById("orders");
+                const data =
+                    await response.json();
+
+
+                console.log(
+                    "📦 Orders data:",
+                    data
+                );
+
+
+                if (!data.success) {
+
+                    throw new Error(
+                        data.message ||
+                        "Could not load orders"
+                    );
+
+                }
+
 
                 ordersContainer.innerHTML = "";
 
 
-                // No orders
+                // ==========================================
+                // GET ORDERS
+                // ==========================================
+
+                const allOrders =
+                    Array.isArray(data.orders)
+                        ? data.orders
+                        : [];
+
+
+                // ==========================================
+                // FILTER KITCHEN ORDERS
+                // ==========================================
+
+                const kitchenOrders =
+                    allOrders.filter(order =>
+
+                        order.status === "Pending" ||
+
+                        order.status === "Preparing"
+
+                    );
+
+
+                // ==========================================
+                // NO ORDERS
+                // ==========================================
 
                 if (
-                    !data.orders ||
-                    data.orders.length === 0
+                    kitchenOrders.length === 0
                 ) {
 
                     ordersContainer.innerHTML = `
+
                         <div class="no-orders">
-                            🍽️ No orders yet
+
+                            🍽️ No new orders
+
                         </div>
+
                     `;
 
                     return;
+
                 }
 
 
-                // Display every order
+                // ==========================================
+                // DISPLAY ORDERS
+                // ==========================================
 
-                data.orders
-    .filter(order =>
-        order.status === "Pending" ||
-        order.status === "Preparing"
-    )
-    .forEach(order => {
-
-                    let items;
+                kitchenOrders.forEach(order => {
 
 
-                    // Convert JSON string to array
+                    // ==========================================
+                    // ITEMS
+                    // ==========================================
+
+                    let items = [];
+
 
                     try {
 
                         if (
-                            typeof order.items === "string"
+                            typeof order.items ===
+                            "string"
                         ) {
 
-                            items = JSON.parse(
-                                order.items
-                            );
-
-                        } else {
-
-                            items = order.items;
+                            items =
+                                JSON.parse(
+                                    order.items
+                                );
 
                         }
 
-                    } catch (error) {
+                        else if (
+                            Array.isArray(
+                                order.items
+                            )
+                        ) {
+
+                            items =
+                                order.items;
+
+                        }
+
+                    }
+
+                    catch (error) {
 
                         console.error(
                             "❌ Items JSON error:",
@@ -226,97 +391,161 @@
                     }
 
 
-                    // Create items HTML
+                    // ==========================================
+                    // ITEMS HTML
+                    // ==========================================
 
                     let itemsHTML = "";
 
 
                     items.forEach(item => {
 
+                        const quantity =
+                            Number(
+                                item.quantity
+                            ) || 1;
+
+
                         itemsHTML += `
+
                             <li>
+
                                 ${item.name}
-                                × ${item.quantity}
+
+                                × ${quantity}
+
                             </li>
+
                         `;
 
                     });
 
 
-                    // Default status
+                    // ==========================================
+                    // STATUS
+                    // ==========================================
 
                     const status =
-                        order.status || "Pending";
+                        order.status ||
+                        "Pending";
 
 
-                    // Button
+                    // ==========================================
+                    // BUTTON
+                    // ==========================================
 
                     let buttonHTML = "";
 
 
-                    if (status === "Pending") {
+                    if (
+                        status === "Pending"
+                    ) {
 
                         buttonHTML = `
+
                             <button
-                                onclick="startPreparing(${order.id})"
+                                onclick="
+                                    startPreparing(
+                                        ${order.id}
+                                    )
+                                "
                             >
+
                                 👨‍🍳 Start Preparing
+
                             </button>
+
                         `;
 
                     }
 
-                    else if (status === "Preparing") {
+
+                    else if (
+                        status === "Preparing"
+                    ) {
 
                         buttonHTML = `
+
                             <button
-                                onclick="markReady(${order.id})"
+                                onclick="
+                                    markReady(
+                                        ${order.id}
+                                    )
+                                "
                             >
+
                                 ✅ Mark as Ready
+
                             </button>
-                        `;
 
-                    }
-
-                    else {
-
-                        buttonHTML = `
-                            <button disabled>
-                                ✅ Ready
-                            </button>
                         `;
 
                     }
 
 
-                    // Create order card
+                    // ==========================================
+                    // ORDER CARD
+                    // ==========================================
 
                     ordersContainer.innerHTML += `
 
                         <div class="order-card">
 
                             <h2>
-                                🪑 Table
-                                ${order.table_number}
+
+                                🧾 Order #${order.id}
+
                             </h2>
 
-                            <ul>
-                                ${itemsHTML}
-                            </ul>
 
                             <p>
+
+                                🪑 Table:
+
                                 <strong>
-                                    Total:
-                                    ₹${order.total}
+
+                                    ${order.table_number}
+
                                 </strong>
+
                             </p>
+
+
+                            <h3>
+
+                                🍛 Items
+
+                            </h3>
+
+
+                            <ul>
+
+                                ${itemsHTML}
+
+                            </ul>
+
+
+                            <p>
+
+                                <strong>
+
+                                    💰 Total:
+                                    ₹${Number(
+                                        order.total
+                                    ).toFixed(2)}
+
+                                </strong>
+
+                            </p>
+
 
                             <p class="status">
 
-                                Status:
+                                📌 Status:
                                 ${status}
 
                             </p>
+
 
                             ${buttonHTML}
 
@@ -326,7 +555,9 @@
 
                 });
 
+
             }
+
 
             catch (error) {
 
@@ -335,11 +566,20 @@
                     error
                 );
 
-                document.getElementById("orders").innerHTML = `
+
+                ordersContainer.innerHTML = `
 
                     <div class="no-orders">
 
                         ❌ Cannot connect to restaurant server
+
+                        <br><br>
+
+                        <small>
+
+                            ${error.message}
+
+                        </small>
 
                     </div>
 
@@ -351,36 +591,56 @@
 
 
         // ==========================================
-        // PENDING → PREPARING
+        // UPDATE ORDER STATUS
         // ==========================================
 
-        async function startPreparing(orderId) {
+        async function updateOrderStatus(
+            orderId,
+            status
+        ) {
 
             try {
 
-                const response = await fetch(
+                console.log(
+                    `📡 Updating Order ${orderId} → ${status}`
+                );
 
-                    `http://localhost:3000/api/orders/${orderId}/status`,
 
-                    {
+                const response =
+                    await fetch(
 
-                        method: "PUT",
+                        `${SERVER_URL}/api/orders/${orderId}/status`,
 
-                        headers: {
+                        {
 
-                            "Content-Type":
-                                "application/json"
+                            method: "PUT",
 
-                        },
+                            headers: {
 
-                        body: JSON.stringify({
+                                "Content-Type":
+                                    "application/json",
 
-                            status: "Preparing"
+                                "Accept":
+                                    "application/json"
 
-                        })
+                            },
 
-                    }
+                            body:
+                                JSON.stringify({
 
+                                    status:
+                                        status
+
+                                })
+
+                        }
+
+                    );
+
+
+                console.log(
+                    "📥 Status response:",
+                    response.status
                 );
 
 
@@ -388,25 +648,44 @@
                     await response.json();
 
 
-                if (data.success) {
+                console.log(
+                    "📦 Status data:",
+                    data
+                );
 
-                    alert(
-                        "👨‍🍳 Order is now Preparing!"
+
+                if (!response.ok) {
+
+                    throw new Error(
+
+                        data.message ||
+
+                        `Server error: ${response.status}`
+
                     );
-
-                    loadOrders();
 
                 }
 
-                else {
 
-                    alert(
-                        "❌ Could not update order!"
-                    );
+                if (
+                    data.success
+                ) {
+
+                    return true;
 
                 }
+
+
+                throw new Error(
+
+                    data.message ||
+
+                    "Could not update order"
+
+                );
 
             }
+
 
             catch (error) {
 
@@ -415,9 +694,66 @@
                     error
                 );
 
+
                 alert(
-                    "❌ Could not connect to server!"
+
+                    "❌ Could not connect to restaurant server!\n\n" +
+
+                    error.message
+
                 );
+
+
+                return false;
+
+            }
+
+        }
+
+
+        // ==========================================
+        // PENDING → PREPARING
+        // ==========================================
+
+        async function startPreparing(
+            orderId
+        ) {
+
+            const confirmed =
+                confirm(
+
+                    `👨‍🍳 Start preparing Order #${orderId}?`
+
+                );
+
+
+            if (!confirmed) {
+
+                return;
+
+            }
+
+
+            const success =
+                await updateOrderStatus(
+
+                    orderId,
+
+                    "Preparing"
+
+                );
+
+
+            if (success) {
+
+                alert(
+
+                    `👨‍🍳 Order #${orderId} is now Preparing!`
+
+                );
+
+
+                loadOrders();
 
             }
 
@@ -428,70 +764,45 @@
         // PREPARING → READY
         // ==========================================
 
-        async function markReady(orderId) {
+        async function markReady(
+            orderId
+        ) {
 
-            try {
+            const confirmed =
+                confirm(
 
-                const response = await fetch(
-
-                    `http://localhost:3000/api/orders/${orderId}/status`,
-
-                    {
-
-                        method: "PUT",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json"
-
-                        },
-
-                        body: JSON.stringify({
-
-                            status: "Ready"
-
-                        })
-
-                    }
+                    `✅ Mark Order #${orderId} as Ready?`
 
                 );
 
 
-                const data =
-                    await response.json();
+            if (!confirmed) {
 
-
-                if (data.success) {
-
-                    alert(
-                        "✅ Order is Ready!"
-                    );
-
-                    loadOrders();
-
-                }
-
-                else {
-
-                    alert(
-                        "❌ Could not update order!"
-                    );
-
-                }
+                return;
 
             }
 
-            catch (error) {
 
-                console.error(
-                    "❌ Status update error:",
-                    error
+            const success =
+                await updateOrderStatus(
+
+                    orderId,
+
+                    "Ready"
+
                 );
+
+
+            if (success) {
 
                 alert(
-                    "❌ Could not connect to server!"
+
+                    `✅ Order #${orderId} is Ready!`
+
                 );
+
+
+                loadOrders();
 
             }
 
@@ -499,14 +810,27 @@
 
 
         // ==========================================
-        // LOAD ORDERS WHEN PAGE OPENS
+        // FIRST LOAD
         // ==========================================
 
         loadOrders();
-        // Automatically check for new orders every 5 seconds
-setInterval(loadOrders, 5000);
+
+
+        // ==========================================
+        // AUTO REFRESH
+        // ==========================================
+
+        setInterval(
+
+            loadOrders,
+
+            5000
+
+        );
+
 
     </script>
+
 
 </body>
 

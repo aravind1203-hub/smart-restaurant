@@ -5,8 +5,10 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>QResto - Table QR Codes</title>
 
@@ -45,150 +47,91 @@
         }
 
         .tables {
-
             display: grid;
-
             grid-template-columns:
                 repeat(auto-fit, minmax(220px, 1fr));
-
             gap: 25px;
-
         }
 
         .table-card {
-
             background: white;
-
             padding: 20px;
-
             border-radius: 15px;
-
             text-align: center;
 
             box-shadow:
                 0 5px 15px rgba(0, 0, 0, 0.15);
-
         }
 
         .table-card h2 {
-
             color: #6b1e1e;
-
             margin-top: 0;
-
         }
 
         .qr {
-
             width: 180px;
             height: 180px;
-
             margin: 15px auto;
-
         }
 
         .table-link {
-
             font-size: 13px;
-
             color: #555;
-
             word-break: break-all;
-
             margin: 10px 0;
-
         }
 
         button {
-
             padding: 10px 18px;
-
             border: none;
-
             border-radius: 8px;
-
             background: #d89b00;
-
             color: white;
-
             font-size: 15px;
-
             font-weight: bold;
-
             cursor: pointer;
-
         }
 
         button:hover {
-
             background: #b77d00;
-
         }
 
-
-        /* PRINT BUTTON */
-
         .print-button {
-
             display: block;
-
             margin: 25px auto;
-
             background: #6b1e1e;
-
             font-size: 17px;
-
             padding: 12px 25px;
-
         }
 
         .print-button:hover {
-
             background: #4e1515;
-
         }
-
-
-        /* PRINT STYLE */
 
         @media print {
 
             body {
-
                 background: white;
-
             }
 
             header {
-
                 background: white;
-
                 color: black;
-
                 border-bottom: 2px solid black;
-
             }
 
             .print-button {
-
                 display: none;
-
             }
 
             .table-card {
-
                 box-shadow: none;
-
                 border: 1px solid #ddd;
-
                 break-inside: avoid;
-
             }
 
             button {
-
                 display: none;
-
             }
 
         }
@@ -218,19 +161,18 @@
     </header>
 
 
-
     <!-- ==========================================
          PRINT BUTTON
     ========================================== -->
 
     <button
         class="print-button"
-        onclick="window.print()">
+        onclick="window.print()"
+    >
 
         🖨️ Print All QR Codes
 
     </button>
-
 
 
     <!-- ==========================================
@@ -241,12 +183,10 @@
 
         <div
             class="tables"
-            id="tables">
-
-        </div>
+            id="tables"
+        ></div>
 
     </div>
-
 
 
     <!-- ==========================================
@@ -257,48 +197,61 @@
     </script>
 
 
-
     <script>
 
-        // ==========================================
-        // IMPORTANT
-        // ==========================================
+        // ==================================================
+        // LIVE RENDER SERVER
+        // ==================================================
 
         /*
-            PC IP ADDRESS
+            IMPORTANT:
 
-            Your computer IP:
-            10.29.95.40
+            DO NOT USE:
 
-            Live Server:
-            5500
+            http://10.29.95.40:5500
 
-            Frontend:
-            /frontend/index.html
+            That is your local PC address.
+
+            Use Render server instead.
         */
 
+        const SERVER_URL =
+            "https://smart-restaurant-3axh.onrender.com";
 
-        const PC_IP =
-            "10.29.95.40";
 
+        // ==================================================
+        // FRONTEND MENU URL
+        // ==================================================
+
+        /*
+            Your server.js contains:
+
+            app.use(express.static(frontendPath));
+
+            and
+
+            app.get("/", ... index.html)
+
+            So customer menu can open directly using:
+
+            https://smart-restaurant-3axh.onrender.com/?table=1
+        */
 
         const FRONTEND_URL =
-            `http://${PC_IP}:5500/frontend/index.html`;
+            SERVER_URL + "/";
 
 
-
-        // ==========================================
+        // ==================================================
         // TABLE CONTAINER
-        // ==========================================
+        // ==================================================
 
         const tablesContainer =
             document.getElementById("tables");
 
 
-
-        // ==========================================
-        // CREATE TABLE CARDS
-        // ==========================================
+        // ==================================================
+        // CREATE 10 TABLE CARDS
+        // ==================================================
 
         for (
             let table = 1;
@@ -306,25 +259,13 @@
             table++
         ) {
 
-
-            // Unique QR ID
-
             const qrId =
                 `qr-table-${table}`;
 
 
-            // ==========================================
-            // CUSTOMER MENU URL
-            // ==========================================
-
             const menuURL =
                 `${FRONTEND_URL}?table=${table}`;
 
-
-
-            // ==========================================
-            // CREATE CARD
-            // ==========================================
 
             tablesContainer.innerHTML += `
 
@@ -337,8 +278,8 @@
 
                     <div
                         class="qr"
-                        id="${qrId}">
-                    </div>
+                        id="${qrId}"
+                    ></div>
 
 
                     <p class="table-link">
@@ -349,7 +290,8 @@
 
 
                     <button
-                        onclick="openMenu(${table})">
+                        onclick="openMenu(${table})"
+                    >
 
                         🍽️ Open Menu
 
@@ -362,10 +304,9 @@
         }
 
 
-
-        // ==========================================
+        // ==================================================
         // GENERATE QR CODES
-        // ==========================================
+        // ==================================================
 
         for (
             let table = 1;
@@ -373,10 +314,8 @@
             table++
         ) {
 
-
             const menuURL =
                 `${FRONTEND_URL}?table=${table}`;
-
 
 
             new QRCode(
@@ -400,24 +339,19 @@
         }
 
 
-
-        // ==========================================
+        // ==================================================
         // OPEN CUSTOMER MENU
-        // ==========================================
+        // ==================================================
 
         function openMenu(table) {
-
 
             const menuURL =
                 `${FRONTEND_URL}?table=${table}`;
 
 
             window.open(
-
                 menuURL,
-
                 "_blank"
-
             );
 
         }

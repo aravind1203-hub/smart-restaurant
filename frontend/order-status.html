@@ -33,6 +33,10 @@
             margin: 0;
         }
 
+        header p {
+            margin: 7px 0 0;
+        }
+
         .container {
             width: 90%;
             max-width: 600px;
@@ -131,12 +135,33 @@
             font-weight: bold;
         }
 
+        .loading {
+            text-align: center;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .server-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: #faf7f1;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+
     </style>
 
 </head>
 
 
 <body>
+
+
+    <!-- ==========================================
+         HEADER
+    =========================================== -->
 
     <header>
 
@@ -147,12 +172,16 @@
     </header>
 
 
+    <!-- ==========================================
+         CONTAINER
+    =========================================== -->
+
     <div class="container">
 
         <div id="order-container">
 
-            <p class="error">
-                Loading order...
+            <p class="loading">
+                ⏳ Loading order...
             </p>
 
         </div>
@@ -162,12 +191,29 @@
 
     <script>
 
+
         // ==========================================
         // SERVER URL
         // ==========================================
 
+        /*
+            LOCAL:
+            http://localhost:3000
+
+            RENDER:
+            https://smart-restaurant-3axh.onrender.com
+
+            Automatically detects current server.
+        */
+
         const SERVER_URL =
-            "http://10.29.95.40:3000";
+            window.location.origin;
+
+
+        console.log(
+            "🌐 Server URL:",
+            SERVER_URL
+        );
 
 
         // ==========================================
@@ -179,8 +225,15 @@
                 window.location.search
             );
 
+
         const orderId =
             urlParams.get("order");
+
+
+        console.log(
+            "🧾 Order ID:",
+            orderId
+        );
 
 
         // ==========================================
@@ -189,8 +242,26 @@
 
         function openBill() {
 
+            if (!orderId) {
+
+                alert(
+                    "❌ Order ID not found"
+                );
+
+                return;
+
+            }
+
+
+            /*
+                Use relative URL.
+
+                This automatically stays
+                on the same Render server.
+            */
+
             window.location.href =
-                `bill.html?order=${orderId}`;
+                `bill.html?order=${encodeURIComponent(orderId)}`;
 
         }
 
@@ -201,6 +272,11 @@
 
         async function loadOrder() {
 
+
+            // ==========================================
+            // CHECK ORDER ID
+            // ==========================================
+
             if (!orderId) {
 
                 document.getElementById(
@@ -208,7 +284,9 @@
                 ).innerHTML = `
 
                     <p class="error">
+
                         ❌ Order ID not found
+
                     </p>
 
                 `;
@@ -220,29 +298,83 @@
 
             try {
 
+
+                console.log(
+                    "📡 Loading order from:",
+                    `${SERVER_URL}/api/orders/${orderId}`
+                );
+
+
+                // ==========================================
+                // FETCH ORDER
+                // ==========================================
+
                 const response =
                     await fetch(
-                        `${SERVER_URL}/api/orders/${orderId}`
+
+                        `${SERVER_URL}/api/orders/${encodeURIComponent(orderId)}`,
+
+                        {
+
+                            method: "GET",
+
+                            headers: {
+
+                                "Accept":
+                                    "application/json"
+
+                            }
+
+                        }
+
                     );
 
+
+                console.log(
+                    "📥 Server status:",
+                    response.status
+                );
+
+
+                // ==========================================
+                // SERVER ERROR
+                // ==========================================
 
                 if (!response.ok) {
 
                     throw new Error(
-                        "Order not found"
+                        `Server returned ${response.status}`
                     );
 
                 }
 
 
+                // ==========================================
+                // READ JSON
+                // ==========================================
+
                 const data =
                     await response.json();
 
 
+                console.log(
+                    "📦 Order response:",
+                    data
+                );
+
+
+                // ==========================================
+                // CHECK SUCCESS
+                // ==========================================
+
                 if (!data.success) {
 
                     throw new Error(
+
+                        data.message ||
+
                         "Order not found"
+
                     );
 
                 }
@@ -259,32 +391,65 @@
                 let items = [];
 
 
-                if (
-                    typeof order.items ===
-                    "string"
-                ) {
+                try {
 
-                    items =
-                        JSON.parse(order.items);
+                    if (
+                        typeof order.items ===
+                        "string"
+                    ) {
+
+                        items =
+                            JSON.parse(
+                                order.items
+                            );
+
+                    }
+
+                    else {
+
+                        items =
+                            order.items || [];
+
+                    }
 
                 }
 
-                else {
+                catch (error) {
 
-                    items =
-                        order.items;
+                    console.error(
+                        "❌ Items JSON error:",
+                        error
+                    );
+
+                    items = [];
 
                 }
 
+
+                // ==========================================
+                // ITEMS HTML
+                // ==========================================
 
                 let itemsHTML = "";
 
 
                 items.forEach(item => {
 
+
+                    const quantity =
+                        Number(
+                            item.quantity
+                        ) || 1;
+
+
+                    const price =
+                        Number(
+                            item.price
+                        ) || 0;
+
+
                     const itemTotal =
-                        item.price *
-                        item.quantity;
+                        price * quantity;
 
 
                     itemsHTML += `
@@ -293,9 +458,11 @@
 
                             ${item.name}
 
-                            × ${item.quantity}
+                            × ${quantity}
 
-                            - ₹${itemTotal}
+                            -
+
+                            ₹${itemTotal.toFixed(2)}
 
                         </li>
 
@@ -304,19 +471,37 @@
                 });
 
 
+                if (!itemsHTML) {
+
+                    itemsHTML = `
+
+                        <li>
+                            No items found
+                        </li>
+
+                    `;
+
+                }
+
+
                 // ==========================================
                 // ORDER STATUS
                 // ==========================================
 
+                const orderStatus =
+                    order.status || "Pending";
+
+
                 let statusClass =
                     "pending";
+
 
                 let statusIcon =
                     "🟡";
 
 
                 if (
-                    order.status ===
+                    orderStatus ===
                     "Preparing"
                 ) {
 
@@ -329,8 +514,8 @@
                 }
 
 
-                if (
-                    order.status ===
+                else if (
+                    orderStatus ===
                     "Ready"
                 ) {
 
@@ -347,11 +532,16 @@
                 // PAYMENT STATUS
                 // ==========================================
 
+                const paymentStatus =
+                    order.payment_status ||
+                    "Pending";
+
+
                 let paymentHTML = "";
 
 
                 if (
-                    order.payment_status ===
+                    paymentStatus ===
                     "Paid"
                 ) {
 
@@ -360,16 +550,23 @@
                         <div class="payment-box">
 
                             <div class="payment-title">
+
                                 💰 Payment Status
+
                             </div>
 
                             <p class="payment-paid">
+
                                 ✅ Payment Received
+
                             </p>
 
                             <p>
-                                Thank you! Your payment
-                                has been confirmed.
+
+                                Thank you!
+                                Your payment has
+                                been confirmed.
+
                             </p>
 
                         </div>
@@ -385,16 +582,22 @@
                         <div class="payment-box">
 
                             <div class="payment-title">
+
                                 💰 Payment Status
+
                             </div>
 
                             <p class="payment-pending">
+
                                 🟡 Payment Pending
+
                             </p>
 
                             <p>
+
                                 Please pay at the
                                 restaurant counter.
+
                             </p>
 
                         </div>
@@ -412,7 +615,7 @@
 
 
                 if (
-                    order.status ===
+                    orderStatus ===
                     "Ready"
                 ) {
 
@@ -433,7 +636,7 @@
 
 
                 // ==========================================
-                // DISPLAY
+                // DISPLAY ORDER
                 // ==========================================
 
                 document.getElementById(
@@ -442,8 +645,11 @@
 
                     <div class="order-card">
 
+
                         <h2>
+
                             🧾 Order #${order.id}
+
                         </h2>
 
 
@@ -452,14 +658,18 @@
                             🪑 Table:
 
                             <strong>
+
                                 ${order.table_number}
+
                             </strong>
 
                         </p>
 
 
                         <h3>
+
                             🍛 Your Items
+
                         </h3>
 
 
@@ -472,8 +682,11 @@
 
                         <p class="total">
 
-                            Total:
-                            ₹${order.total}
+                            💰 Total:
+
+                            ₹${Number(
+                                order.total || 0
+                            ).toFixed(2)}
 
                         </p>
 
@@ -486,7 +699,7 @@
 
                                 ${statusIcon}
 
-                                ${order.status}
+                                ${orderStatus}
 
                             </div>
 
@@ -498,6 +711,7 @@
 
                         ${billButton}
 
+
                     </div>
 
                 `;
@@ -505,7 +719,12 @@
             }
 
 
+            // ==========================================
+            // ERROR
+            // ==========================================
+
             catch (error) {
+
 
                 console.error(
                     "❌ Order status error:",
@@ -517,11 +736,23 @@
                     "order-container"
                 ).innerHTML = `
 
-                    <p class="error">
+                    <div>
 
-                        ❌ Cannot load order status
+                        <p class="error">
 
-                    </p>
+                            ❌ Cannot load order status
+
+                        </p>
+
+
+                        <div class="server-info">
+
+                            Server:
+                            ${SERVER_URL}
+
+                        </div>
+
+                    </div>
 
                 `;
 
@@ -531,7 +762,7 @@
 
 
         // ==========================================
-        // LOAD
+        // FIRST LOAD
         // ==========================================
 
         loadOrder();
@@ -542,11 +773,16 @@
         // ==========================================
 
         setInterval(
+
             loadOrder,
+
             5000
+
         );
 
+
     </script>
+
 
 </body>
 

@@ -51,13 +51,9 @@
         .bill-container {
             width: 92%;
             max-width: 650px;
-
             margin: 35px auto;
-
             background: white;
-
             padding: 25px;
-
             border-radius: 18px;
 
             box-shadow:
@@ -72,12 +68,9 @@
 
         .bill-title {
             text-align: center;
-
             color: #6b1e1e;
-
             margin-top: 0;
             margin-bottom: 25px;
-
             font-size: 25px;
         }
 
@@ -87,19 +80,14 @@
 
         .bill-info {
             background: #faf7f1;
-
             padding: 16px;
-
             border-radius: 10px;
-
             margin-bottom: 25px;
-
             border: 1px solid #eee;
         }
 
         .bill-info p {
             margin: 8px 0;
-
             font-size: 16px;
         }
 
@@ -113,9 +101,7 @@
 
         .items-title {
             color: #6b1e1e;
-
             font-size: 19px;
-
             margin-bottom: 15px;
         }
 
@@ -129,47 +115,37 @@
 
         .bill-item {
             display: flex;
-
             justify-content: space-between;
-
             align-items: center;
 
             background: #faf7f1;
 
             padding: 14px;
-
             margin-bottom: 10px;
 
             border-radius: 10px;
-
             border: 1px solid #eee;
         }
 
         .item-left {
             display: flex;
-
             flex-direction: column;
-
             gap: 5px;
         }
 
         .item-name {
             font-weight: bold;
-
             color: #333;
         }
 
         .item-details {
             font-size: 13px;
-
             color: #777;
         }
 
         .item-price {
             font-size: 16px;
-
             font-weight: bold;
-
             color: #6b1e1e;
         }
 
@@ -179,13 +155,10 @@
 
         .bill-total {
             display: flex;
-
             justify-content: space-between;
-
             align-items: center;
 
             margin-top: 25px;
-
             padding: 20px 5px;
 
             border-top: 2px solid #ddd;
@@ -195,7 +168,6 @@
 
         .bill-total strong {
             color: #6b1e1e;
-
             font-size: 25px;
         }
 
@@ -205,7 +177,6 @@
 
         .payment-message {
             margin-top: 20px;
-
             padding: 20px;
 
             background: #fff8e6;
@@ -219,23 +190,18 @@
 
         .payment-message h3 {
             color: #6b1e1e;
-
             margin-top: 0;
-
             margin-bottom: 12px;
         }
 
         .payment-pending {
             color: #d89b00;
-
             font-size: 17px;
-
             font-weight: bold;
         }
 
         .payment-message p {
             margin: 9px 0;
-
             color: #555;
         }
 
@@ -245,10 +211,18 @@
 
         .error {
             text-align: center;
-
             color: #6b1e1e;
-
             font-weight: bold;
+        }
+
+        /* ================================
+           LOADING
+        ================================= */
+
+        .loading {
+            text-align: center;
+            color: #777;
+            padding: 20px;
         }
 
         /* ================================
@@ -259,9 +233,7 @@
 
             .bill-container {
                 width: 94%;
-
                 padding: 18px;
-
                 margin: 20px auto;
             }
 
@@ -337,17 +309,24 @@
         <div class="bill-info">
 
             <p>
+
                 🧾 Order ID:
+
                 <strong id="order-id">
                     Loading...
                 </strong>
+
             </p>
 
+
             <p>
+
                 🪑 Table:
+
                 <strong id="table-number">
                     Loading...
                 </strong>
+
             </p>
 
         </div>
@@ -362,7 +341,9 @@
 
         <div id="bill-items">
 
-            Loading items...
+            <p class="loading">
+                Loading items...
+            </p>
 
         </div>
 
@@ -390,17 +371,24 @@
                 💵 Pay at Counter
             </h3>
 
+
             <p class="payment-pending">
                 🟡 Payment Pending
             </p>
 
+
             <p id="payment-text">
+
                 Please pay the bill at the
                 restaurant counter.
+
             </p>
 
+
             <p>
+
                 👨‍💼 Show this bill to the cashier.
+
             </p>
 
         </div>
@@ -416,12 +404,31 @@
         // SERVER URL
         // ==========================================
 
+        /*
+            IMPORTANT:
+
+            Same Render server:
+            https://smart-restaurant-3axh.onrender.com
+
+            Local:
+            http://localhost:3000
+
+            window.location.origin automatically
+            selects the correct server.
+        */
+
         const SERVER_URL =
-            "http://10.29.95.40:3000";
+            window.location.origin;
+
+
+        console.log(
+            "🌐 Server URL:",
+            SERVER_URL
+        );
 
 
         // ==========================================
-        // GET ORDER ID FROM URL
+        // GET ORDER ID
         // ==========================================
 
         const urlParams =
@@ -434,12 +441,22 @@
             urlParams.get("order");
 
 
+        console.log(
+            "🧾 Order ID:",
+            orderId
+        );
+
+
         // ==========================================
         // LOAD BILL
         // ==========================================
 
         async function loadBill() {
 
+
+            // ------------------------------------------
+            // CHECK ORDER ID
+            // ------------------------------------------
 
             if (!orderId) {
 
@@ -448,7 +465,9 @@
                 ).innerHTML = `
 
                     <p class="error">
+
                         ❌ Order ID not found
+
                     </p>
 
                 `;
@@ -461,36 +480,88 @@
             try {
 
 
+                console.log(
+                    "📡 Requesting order:",
+                    `${SERVER_URL}/api/orders/${orderId}`
+                );
+
+
+                // ------------------------------------------
+                // FETCH ORDER
+                // ------------------------------------------
+
                 const response =
                     await fetch(
+
                         `${SERVER_URL}/api/orders/${orderId}`
+
                     );
 
 
-                if (!response.ok) {
+                console.log(
+                    "📥 Response status:",
+                    response.status
+                );
 
-                    throw new Error(
-                        "Order not found"
-                    );
 
-                }
-
+                // ------------------------------------------
+                // READ RESPONSE
+                // ------------------------------------------
 
                 const data =
                     await response.json();
 
 
-                if (!data.success) {
+                console.log(
+                    "📦 Order response:",
+                    data
+                );
+
+
+                // ------------------------------------------
+                // SERVER ERROR
+                // ------------------------------------------
+
+                if (!response.ok) {
 
                     throw new Error(
-                        "Order not found"
+
+                        data.message ||
+                        `Server error: ${response.status}`
+
                     );
 
                 }
 
 
+                // ------------------------------------------
+                // API ERROR
+                // ------------------------------------------
+
+                if (!data.success) {
+
+                    throw new Error(
+
+                        data.message ||
+                        "Order not found"
+
+                    );
+
+                }
+
+
+                // ------------------------------------------
+                // ORDER DATA
+                // ------------------------------------------
+
                 const order =
                     data.order;
+
+
+                console.log(
+                    "🧾 Order:",
+                    order
+                );
 
 
                 // ==========================================
@@ -504,7 +575,7 @@
 
 
                 // ==========================================
-                // TABLE
+                // TABLE NUMBER
                 // ==========================================
 
                 document.getElementById(
@@ -520,21 +591,52 @@
                 let items = [];
 
 
-                if (
-                    typeof order.items ===
-                    "string"
-                ) {
+                try {
 
-                    items =
-                        JSON.parse(order.items);
 
-                } else {
+                    if (
+                        typeof order.items ===
+                        "string"
+                    ) {
 
-                    items =
-                        order.items || [];
+                        items =
+                            JSON.parse(
+                                order.items
+                            );
+
+                    }
+
+                    else {
+
+                        items =
+                            order.items || [];
+
+                    }
+
 
                 }
 
+                catch (jsonError) {
+
+                    console.error(
+                        "❌ Items JSON error:",
+                        jsonError
+                    );
+
+                    items = [];
+
+                }
+
+
+                console.log(
+                    "🍛 Items:",
+                    items
+                );
+
+
+                // ==========================================
+                // CREATE ITEMS HTML
+                // ==========================================
 
                 let itemsHTML = "";
 
@@ -543,11 +645,15 @@
 
 
                     const quantity =
-                        Number(item.quantity) || 1;
+                        Number(
+                            item.quantity
+                        ) || 1;
 
 
                     const price =
-                        Number(item.price) || 0;
+                        Number(
+                            item.price
+                        ) || 0;
 
 
                     const itemTotal =
@@ -566,10 +672,12 @@
 
                                 </div>
 
+
                                 <div class="item-details">
 
                                     ₹${price.toFixed(2)}
-                                    × ${quantity}
+                                    ×
+                                    ${quantity}
 
                                 </div>
 
@@ -596,8 +704,18 @@
                 document.getElementById(
                     "bill-items"
                 ).innerHTML =
+
                     itemsHTML ||
-                    "<p>No items found.</p>";
+
+                    `
+
+                        <p class="error">
+
+                            ❌ No items found
+
+                        </p>
+
+                    `;
 
 
                 // ==========================================
@@ -605,13 +723,17 @@
                 // ==========================================
 
                 const total =
-                    Number(order.total) || 0;
+                    Number(
+                        order.total
+                    ) || 0;
 
 
                 document.getElementById(
                     "total-amount"
                 ).textContent =
-                    "₹" + total.toFixed(2);
+
+                    "₹" +
+                    total.toFixed(2);
 
 
                 // ==========================================
@@ -633,8 +755,11 @@
                     paymentMessage.innerHTML = `
 
                         <h3>
+
                             💰 Payment Completed
+
                         </h3>
+
 
                         <p style="
                             color: green;
@@ -645,6 +770,7 @@
                             ✅ Payment Received
 
                         </p>
+
 
                         <p>
 
@@ -658,7 +784,17 @@
                 }
 
 
+                else {
+
+                    console.log(
+                        "🟡 Payment pending"
+                    );
+
+                }
+
+
             }
+
 
             catch (error) {
 
@@ -676,6 +812,10 @@
                     <p class="error">
 
                         ❌ Cannot load bill details
+
+                        <br><br>
+
+                        ${error.message}
 
                     </p>
 
