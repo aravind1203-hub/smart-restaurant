@@ -8,37 +8,78 @@ const path = require("path");
 const app = express();
 
 
-// ==========================================
+// ======================================================
 // MIDDLEWARE
-// ==========================================
+// ======================================================
 
 app.use(cors());
 app.use(express.json());
 
 
-// ==========================================
-// FRONTEND FILES
-// ==========================================
+// ======================================================
+// FRONTEND PATH
+// ======================================================
 
 const frontendPath = path.join(__dirname, "..", "frontend");
 
+
+// ======================================================
+// SERVE FRONTEND FILES
+// ======================================================
+
+// /frontend/... support
 app.use("/frontend", express.static(frontendPath));
 
+// Main frontend files, CSS, JS, images
+app.use(express.static(frontendPath));
 
-// ==========================================
+
+// ======================================================
+// MYSQL CONFIGURATION
+// ======================================================
+
+// Railway / Render production variables
+// Local .env variables also supported
+
+const DB_HOST =
+    process.env.DB_HOST || process.env.MYSQLHOST;
+
+const DB_PORT =
+    process.env.DB_PORT || process.env.MYSQLPORT || 3306;
+
+const DB_USER =
+    process.env.DB_USER || process.env.MYSQLUSER;
+
+const DB_PASSWORD =
+    process.env.DB_PASSWORD || process.env.MYSQLPASSWORD;
+
+const DB_NAME =
+    process.env.DB_NAME ||
+    process.env.MYSQLDATABASE;
+
+
+// ======================================================
 // MYSQL CONNECTION
-// ==========================================
+// ======================================================
 
 const db = mysql.createConnection({
 
-    host: process.env.DB_HOST,
-     port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
+    host: DB_HOST,
+
+    port: Number(DB_PORT),
+
+    user: DB_USER,
+
+    password: DB_PASSWORD,
+
+    database: DB_NAME
 
 });
 
+
+// ======================================================
+// MYSQL CONNECT
+// ======================================================
 
 db.connect((err) => {
 
@@ -50,7 +91,6 @@ db.connect((err) => {
         );
 
         return;
-
     }
 
     console.log(
@@ -60,22 +100,23 @@ db.connect((err) => {
 });
 
 
-// ==========================================
-// TEST SERVER
-// ==========================================
+// ======================================================
+// HOME PAGE
+// ======================================================
 
+// Open Smart Restaurant menu directly
 app.get("/", (req, res) => {
 
-    res.send(
-        "Smart Restaurant Backend is Working!"
+    res.sendFile(
+        path.join(frontendPath, "index.html")
     );
 
 });
 
 
-// ==========================================
+// ======================================================
 // PLACE NEW ORDER
-// ==========================================
+// ======================================================
 
 app.post("/api/orders", (req, res) => {
 
@@ -85,6 +126,10 @@ app.post("/api/orders", (req, res) => {
         total
     } = req.body;
 
+
+    // --------------------------------------------------
+    // VALIDATION
+    // --------------------------------------------------
 
     if (
         !table ||
@@ -97,13 +142,16 @@ app.post("/api/orders", (req, res) => {
 
             success: false,
 
-            message:
-                "Invalid order data"
+            message: "Invalid order data"
 
         });
 
     }
 
+
+    // --------------------------------------------------
+    // CHECK TABLE
+    // --------------------------------------------------
 
     const checkTableSQL = `
 
@@ -119,11 +167,8 @@ app.post("/api/orders", (req, res) => {
 
 
     db.query(
-
         checkTableSQL,
-
         [table],
-
         (err, tableResults) => {
 
             if (err) {
@@ -145,6 +190,10 @@ app.post("/api/orders", (req, res) => {
             }
 
 
+            // --------------------------------------------------
+            // TABLE NOT FOUND
+            // --------------------------------------------------
+
             if (tableResults.length === 0) {
 
                 return res.status(404).json({
@@ -159,14 +208,13 @@ app.post("/api/orders", (req, res) => {
             }
 
 
-            if (
-                tableResults[0].status ===
-                "Occupied"
-            ) {
+            // --------------------------------------------------
+            // TABLE OCCUPIED
+            // --------------------------------------------------
 
-                console.log(
-                    `❌ Table ${table} already occupied`
-                );
+            if (
+                tableResults[0].status === "Occupied"
+            ) {
 
                 return res.status(409).json({
 
@@ -180,14 +228,13 @@ app.post("/api/orders", (req, res) => {
             }
 
 
-            // ==========================================
+            // --------------------------------------------------
             // INSERT ORDER
-            // ==========================================
+            // --------------------------------------------------
 
             const insertOrderSQL = `
 
                 INSERT INTO orders
-
                 (
                     table_number,
                     items,
@@ -203,15 +250,12 @@ app.post("/api/orders", (req, res) => {
 
 
             db.query(
-
                 insertOrderSQL,
-
                 [
                     table,
                     JSON.stringify(items),
                     total
                 ],
-
                 (err, result) => {
 
                     if (err) {
@@ -247,9 +291,9 @@ app.post("/api/orders", (req, res) => {
                     );
 
 
-                    // ==========================================
+                    // --------------------------------------------------
                     // MAKE TABLE OCCUPIED
-                    // ==========================================
+                    // --------------------------------------------------
 
                     const updateTableSQL = `
 
@@ -263,11 +307,8 @@ app.post("/api/orders", (req, res) => {
 
 
                     db.query(
-
                         updateTableSQL,
-
                         [table],
-
                         (err, tableUpdateResult) => {
 
                             if (err) {
@@ -277,6 +318,8 @@ app.post("/api/orders", (req, res) => {
                                     err.message
                                 );
 
+
+                                // Delete order if table update fails
 
                                 const deleteOrderSQL = `
 
@@ -288,11 +331,8 @@ app.post("/api/orders", (req, res) => {
 
 
                                 db.query(
-
                                     deleteOrderSQL,
-
                                     [orderId],
-
                                     () => {
 
                                         return res.status(500).json({
@@ -305,11 +345,9 @@ app.post("/api/orders", (req, res) => {
                                         });
 
                                     }
-
                                 );
 
                                 return;
-
                             }
 
 
@@ -334,6 +372,10 @@ app.post("/api/orders", (req, res) => {
                             );
 
 
+                            // --------------------------------------------------
+                            // SUCCESS
+                            // --------------------------------------------------
+
                             return res.json({
 
                                 success: true,
@@ -347,23 +389,20 @@ app.post("/api/orders", (req, res) => {
                             });
 
                         }
-
                     );
 
                 }
-
             );
 
         }
-
     );
 
 });
 
 
-// ==========================================
+// ======================================================
 // GET ALL ORDERS
-// ==========================================
+// ======================================================
 
 app.get("/api/orders", (req, res) => {
 
@@ -379,9 +418,7 @@ app.get("/api/orders", (req, res) => {
 
 
     db.query(
-
         sql,
-
         (err, results) => {
 
             if (err) {
@@ -412,15 +449,14 @@ app.get("/api/orders", (req, res) => {
             });
 
         }
-
     );
 
 });
 
 
-// ==========================================
+// ======================================================
 // GET ONE ORDER
-// ==========================================
+// ======================================================
 
 app.get("/api/orders/:id", (req, res) => {
 
@@ -440,11 +476,8 @@ app.get("/api/orders/:id", (req, res) => {
 
 
     db.query(
-
         sql,
-
         [orderId],
-
         (err, results) => {
 
             if (err) {
@@ -489,535 +522,511 @@ app.get("/api/orders/:id", (req, res) => {
             });
 
         }
-
     );
 
 });
 
 
-// ==========================================
+// ======================================================
 // UPDATE ORDER STATUS
-// ==========================================
+// ======================================================
 
-app.put(
-    "/api/orders/:id/status",
-    (req, res) => {
+app.put("/api/orders/:id/status", (req, res) => {
 
-        const orderId =
-            req.params.id;
+    const orderId =
+        req.params.id;
 
-        const { status } =
-            req.body;
+    const { status } =
+        req.body;
 
 
-        const allowedStatuses = [
+    const allowedStatuses = [
 
-            "Pending",
-            "Preparing",
-            "Ready"
+        "Pending",
+        "Preparing",
+        "Ready"
 
-        ];
+    ];
 
 
-        if (
-            !allowedStatuses.includes(status)
-        ) {
+    if (
+        !allowedStatuses.includes(status)
+    ) {
 
-            return res.status(400).json({
+        return res.status(400).json({
 
-                success: false,
+            success: false,
+
+            message:
+                "Invalid order status"
+
+        });
+
+    }
+
+
+    const sql = `
+
+        UPDATE orders
+
+        SET status = ?
+
+        WHERE id = ?
+
+    `;
+
+
+    db.query(
+        sql,
+        [
+            status,
+            orderId
+        ],
+        (err, result) => {
+
+            if (err) {
+
+                console.log(
+                    "❌ Status update failed:",
+                    err.message
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Status update failed"
+
+                });
+
+            }
+
+
+            if (
+                result.affectedRows === 0
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "Order not found"
+
+                });
+
+            }
+
+
+            console.log(
+                `✅ Order ${orderId} → ${status}`
+            );
+
+
+            res.json({
+
+                success: true,
 
                 message:
-                    "Invalid order status"
+                    "Order status updated!"
 
             });
 
         }
+    );
+
+});
 
 
-        const sql = `
+// ======================================================
+// GET PENDING PAYMENTS
+// ======================================================
 
-            UPDATE orders
+app.get("/api/payments/pending", (req, res) => {
 
-            SET status = ?
+    const sql = `
 
-            WHERE id = ?
+        SELECT *
 
-        `;
+        FROM orders
 
+        WHERE status = 'Ready'
 
-        db.query(
+        AND payment_status = 'Pending'
 
-            sql,
+        ORDER BY created_at DESC
 
-            [
-                status,
-                orderId
-            ],
-
-            (err, result) => {
-
-                if (err) {
-
-                    console.log(
-                        "❌ Status update failed:",
-                        err.message
-                    );
-
-                    return res.status(500).json({
-
-                        success: false,
-
-                        message:
-                            "Status update failed"
-
-                    });
-
-                }
+    `;
 
 
-                if (
-                    result.affectedRows === 0
-                ) {
+    db.query(
+        sql,
+        (err, results) => {
 
-                    return res.status(404).json({
-
-                        success: false,
-
-                        message:
-                            "Order not found"
-
-                    });
-
-                }
-
+            if (err) {
 
                 console.log(
-                    `✅ Order ${orderId} → ${status}`
+                    "❌ Failed to get pending payments:",
+                    err.message
                 );
 
+                return res.status(500).json({
 
-                res.json({
-
-                    success: true,
+                    success: false,
 
                     message:
-                        "Order status updated!"
+                        "Could not fetch pending payments"
 
                 });
 
             }
 
-        );
 
-    }
+            res.json({
 
-);
+                success: true,
 
+                orders: results
 
-// ==========================================
-// GET PENDING PAYMENTS
-// ==========================================
+            });
 
-app.get(
-    "/api/payments/pending",
-    (req, res) => {
+        }
+    );
 
-        const sql = `
-
-            SELECT *
-
-            FROM orders
-
-            WHERE status = 'Ready'
-
-            AND payment_status = 'Pending'
-
-            ORDER BY created_at DESC
-
-        `;
+});
 
 
-        db.query(
-
-            sql,
-
-            (err, results) => {
-
-                if (err) {
-
-                    console.log(
-                        "❌ Failed to get pending payments:",
-                        err.message
-                    );
-
-                    return res.status(500).json({
-
-                        success: false,
-
-                        message:
-                            "Could not fetch pending payments"
-
-                    });
-
-                }
-
-
-                res.json({
-
-                    success: true,
-
-                    orders: results
-
-                });
-
-            }
-
-        );
-
-    }
-
-);
-
-
-// ==========================================
+// ======================================================
 // MARK PAYMENT AS PAID
 // + MAKE TABLE AVAILABLE
-// ==========================================
+// ======================================================
 
-app.put(
-    "/api/payments/:id",
-    (req, res) => {
+app.put("/api/payments/:id", (req, res) => {
 
-        const orderId =
-            req.params.id;
+    const orderId =
+        req.params.id;
 
 
-        const getOrderSQL = `
+    // --------------------------------------------------
+    // GET ORDER
+    // --------------------------------------------------
 
-            SELECT
-                id,
-                table_number,
-                status,
-                payment_status
+    const getOrderSQL = `
 
-            FROM orders
+        SELECT
+            id,
+            table_number,
+            status,
+            payment_status
 
-            WHERE id = ?
+        FROM orders
 
-        `;
+        WHERE id = ?
 
+    `;
 
-        db.query(
 
-            getOrderSQL,
+    db.query(
+        getOrderSQL,
+        [orderId],
+        (err, orderResults) => {
 
-            [orderId],
+            if (err) {
 
-            (err, orderResults) => {
+                console.log(
+                    "❌ Failed to get order:",
+                    err.message
+                );
 
-                if (err) {
+                return res.status(500).json({
 
-                    console.log(
-                        "❌ Failed to get order:",
-                        err.message
-                    );
+                    success: false,
 
-                    return res.status(500).json({
+                    message:
+                        "Could not get order"
 
-                        success: false,
+                });
 
-                        message:
-                            "Could not get order"
+            }
 
-                    });
 
-                }
+            // --------------------------------------------------
+            // ORDER NOT FOUND
+            // --------------------------------------------------
 
+            if (
+                orderResults.length === 0
+            ) {
 
-                if (
-                    orderResults.length === 0
-                ) {
+                return res.status(404).json({
 
-                    return res.status(404).json({
+                    success: false,
 
-                        success: false,
+                    message:
+                        "Order not found"
 
-                        message:
-                            "Order not found"
+                });
 
-                    });
+            }
 
-                }
 
+            const order =
+                orderResults[0];
 
-                const order =
-                    orderResults[0];
 
+            const tableNumber =
+                order.table_number;
 
-                const tableNumber =
-                    order.table_number;
 
+            // --------------------------------------------------
+            // ALREADY PAID
+            // --------------------------------------------------
 
-                if (
-                    order.payment_status ===
-                    "Paid"
-                ) {
+            if (
+                order.payment_status === "Paid"
+            ) {
 
-                    return res.status(400).json({
+                return res.status(400).json({
 
-                        success: false,
+                    success: false,
 
-                        message:
-                            "Payment already received"
+                    message:
+                        "Payment already received"
 
-                    });
+                });
 
-                }
+            }
 
 
-                if (
-                    order.status !==
-                    "Ready"
-                ) {
+            // --------------------------------------------------
+            // ONLY READY ORDER CAN BE PAID
+            // --------------------------------------------------
 
-                    return res.status(400).json({
+            if (
+                order.status !== "Ready"
+            ) {
 
-                        success: false,
+                return res.status(400).json({
 
-                        message:
-                            "Order is not ready for payment"
+                    success: false,
 
-                    });
+                    message:
+                        "Order is not ready for payment"
 
-                }
+                });
 
+            }
 
-                const paymentSQL = `
 
-                    UPDATE orders
+            // --------------------------------------------------
+            // MARK PAYMENT AS PAID
+            // --------------------------------------------------
 
-                    SET payment_status = 'Paid'
+            const paymentSQL = `
 
-                    WHERE id = ?
+                UPDATE orders
 
-                    AND payment_status = 'Pending'
+                SET payment_status = 'Paid'
 
-                `;
+                WHERE id = ?
 
+                AND payment_status = 'Pending'
 
-                db.query(
+            `;
 
-                    paymentSQL,
 
-                    [orderId],
+            db.query(
+                paymentSQL,
+                [orderId],
+                (err, paymentResult) => {
 
-                    (err, paymentResult) => {
-
-                        if (err) {
-
-                            console.log(
-                                "❌ Payment update failed:",
-                                err.message
-                            );
-
-                            return res.status(500).json({
-
-                                success: false,
-
-                                message:
-                                    "Payment update failed"
-
-                            });
-
-                        }
-
-
-                        if (
-                            paymentResult.affectedRows === 0
-                        ) {
-
-                            return res.status(400).json({
-
-                                success: false,
-
-                                message:
-                                    "Payment was already processed"
-
-                            });
-
-                        }
-
+                    if (err) {
 
                         console.log(
-                            `💰 Order ${orderId} → Paid`
+                            "❌ Payment update failed:",
+                            err.message
                         );
 
+                        return res.status(500).json({
 
-                        // ==========================================
-                        // MAKE TABLE AVAILABLE
-                        // ==========================================
+                            success: false,
 
-                        const tableSQL = `
+                            message:
+                                "Payment update failed"
 
-                            UPDATE restaurant_tables
+                        });
 
-                            SET status = 'Available'
-
-                            WHERE table_number = ?
-
-                        `;
+                    }
 
 
-                        db.query(
+                    if (
+                        paymentResult.affectedRows === 0
+                    ) {
 
-                            tableSQL,
+                        return res.status(400).json({
 
-                            [tableNumber],
+                            success: false,
 
-                            (err, tableResult) => {
+                            message:
+                                "Payment was already processed"
 
-                                if (err) {
+                        });
 
-                                    console.log(
-
-                                        "❌ Table availability update failed:",
-
-                                        err.message
-
-                                    );
-
-                                    return res.status(500).json({
-
-                                        success: false,
-
-                                        message:
-                                            "Payment received but table update failed"
-
-                                    });
-
-                                }
+                    }
 
 
-                                if (
-                                    tableResult.affectedRows === 0
-                                ) {
+                    console.log(
+                        `💰 Order ${orderId} → Paid`
+                    );
 
-                                    return res.status(404).json({
 
-                                        success: false,
+                    // --------------------------------------------------
+                    // MAKE TABLE AVAILABLE
+                    // --------------------------------------------------
 
-                                        message:
-                                            "Table not found"
+                    const tableSQL = `
 
-                                    });
+                        UPDATE restaurant_tables
 
-                                }
+                        SET status = 'Available'
 
+                        WHERE table_number = ?
+
+                    `;
+
+
+                    db.query(
+                        tableSQL,
+                        [tableNumber],
+                        (err, tableResult) => {
+
+                            if (err) {
 
                                 console.log(
-                                    `🪑 Table ${tableNumber} → Available`
+                                    "❌ Table availability update failed:",
+                                    err.message
                                 );
 
+                                return res.status(500).json({
 
-                                return res.json({
-
-                                    success: true,
+                                    success: false,
 
                                     message:
-                                        "Payment received successfully!",
-
-                                    orderId:
-                                        orderId,
-
-                                    table:
-                                        tableNumber
+                                        "Payment received but table update failed"
 
                                 });
 
                             }
 
-                        );
 
-                    }
+                            if (
+                                tableResult.affectedRows === 0
+                            ) {
 
-                );
+                                return res.status(404).json({
 
-            }
+                                    success: false,
 
-        );
+                                    message:
+                                        "Table not found"
 
-    }
+                                });
 
-);
-
-
-// ==========================================
-// GET PAID ORDERS
-// ==========================================
-
-app.get(
-    "/api/payments/paid",
-    (req, res) => {
-
-        const sql = `
-
-            SELECT *
-
-            FROM orders
-
-            WHERE payment_status = 'Paid'
-
-            ORDER BY created_at DESC
-
-        `;
+                            }
 
 
-        db.query(
+                            console.log(
+                                `🪑 Table ${tableNumber} → Available`
+                            );
 
-            sql,
 
-            (err, results) => {
+                            return res.json({
 
-                if (err) {
+                                success: true,
 
-                    console.log(
-                        "❌ Failed to get paid orders:",
-                        err.message
+                                message:
+                                    "Payment received successfully!",
+
+                                orderId:
+                                    orderId,
+
+                                table:
+                                    tableNumber
+
+                            });
+
+                        }
                     );
 
-                    return res.status(500).json({
-
-                        success: false,
-
-                        message:
-                            "Could not get paid orders"
-
-                    });
-
                 }
+            );
+
+        }
+    );
+
+});
 
 
-                res.json({
+// ======================================================
+// GET PAID ORDERS
+// ======================================================
 
-                    success: true,
+app.get("/api/payments/paid", (req, res) => {
 
-                    orders: results
+    const sql = `
+
+        SELECT *
+
+        FROM orders
+
+        WHERE payment_status = 'Paid'
+
+        ORDER BY created_at DESC
+
+    `;
+
+
+    db.query(
+        sql,
+        (err, results) => {
+
+            if (err) {
+
+                console.log(
+                    "❌ Failed to get paid orders:",
+                    err.message
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Could not get paid orders"
 
                 });
 
             }
 
-        );
 
-    }
+            res.json({
 
-);
+                success: true,
+
+                orders: results
+
+            });
+
+        }
+    );
+
+});
 
 
-// ==========================================
+// ======================================================
 // GET ALL TABLES
-// ==========================================
+// ======================================================
 
 app.get("/api/tables", (req, res) => {
 
@@ -1033,9 +1042,7 @@ app.get("/api/tables", (req, res) => {
 
 
     db.query(
-
         sql,
-
         (err, results) => {
 
             if (err) {
@@ -1066,96 +1073,87 @@ app.get("/api/tables", (req, res) => {
             });
 
         }
-
     );
 
 });
 
 
-// ==========================================
+// ======================================================
 // GET ONE TABLE
-// ==========================================
+// ======================================================
 
-app.get(
-    "/api/tables/:tableNumber",
-    (req, res) => {
+app.get("/api/tables/:tableNumber", (req, res) => {
 
-        const tableNumber =
-            req.params.tableNumber;
+    const tableNumber =
+        req.params.tableNumber;
 
 
-        const sql = `
+    const sql = `
 
-            SELECT *
+        SELECT *
 
-            FROM restaurant_tables
+        FROM restaurant_tables
 
-            WHERE table_number = ?
+        WHERE table_number = ?
 
-        `;
-
-
-        db.query(
-
-            sql,
-
-            [tableNumber],
-
-            (err, results) => {
-
-                if (err) {
-
-                    console.log(
-                        "❌ Failed to get table:",
-                        err.message
-                    );
-
-                    return res.status(500).json({
-
-                        success: false,
-
-                        message:
-                            "Could not get table"
-
-                    });
-
-                }
+    `;
 
 
-                if (results.length === 0) {
+    db.query(
+        sql,
+        [tableNumber],
+        (err, results) => {
 
-                    return res.status(404).json({
+            if (err) {
 
-                        success: false,
+                console.log(
+                    "❌ Failed to get table:",
+                    err.message
+                );
 
-                        message:
-                            "Table not found"
+                return res.status(500).json({
 
-                    });
+                    success: false,
 
-                }
-
-
-                res.json({
-
-                    success: true,
-
-                    table: results[0]
+                    message:
+                        "Could not get table"
 
                 });
 
             }
 
-        );
 
-    }
+            if (results.length === 0) {
 
-);
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "Table not found"
+
+                });
+
+            }
 
 
-// ==========================================
+            res.json({
+
+                success: true,
+
+                table: results[0]
+
+            });
+
+        }
+    );
+
+});
+
+
+// ======================================================
 // UPDATE TABLE STATUS
-// ==========================================
+// ======================================================
 
 app.put(
     "/api/tables/:tableNumber/status",
@@ -1204,14 +1202,11 @@ app.put(
 
 
         db.query(
-
             sql,
-
             [
                 status,
                 tableNumber
             ],
-
             (err, result) => {
 
                 if (err) {
@@ -1264,42 +1259,18 @@ app.put(
                 });
 
             }
-
         );
 
     }
-
 );
 
 
-// ==========================================
+// ======================================================
 // FRONTEND SHORTCUT ROUTES
-// ==========================================
-
-// Status page
-
-app.get("/status.html", (req, res) => {
-
-    res.sendFile(
-        path.join(frontendPath, "status.html")
-    );
-
-});
+// ======================================================
 
 
-// Bill page
-
-app.get("/bill.html", (req, res) => {
-
-    res.sendFile(
-        path.join(frontendPath, "bill.html")
-    );
-
-});
-
-
-// Menu page
-
+// Menu
 app.get("/menu.html", (req, res) => {
 
     res.sendFile(
@@ -1309,45 +1280,81 @@ app.get("/menu.html", (req, res) => {
 });
 
 
-// ==========================================
-// 404
-// ==========================================
+// Status
+app.get("/status.html", (req, res) => {
 
-app.use((req, res) => {
-
-    res.status(404).send(
-        `❌ Cannot find: ${req.method} ${req.originalUrl}`
+    res.sendFile(
+        path.join(frontendPath, "status.html")
     );
 
 });
 
 
-// ==========================================
+// Bill
+app.get("/bill.html", (req, res) => {
+
+    res.sendFile(
+        path.join(frontendPath, "bill.html")
+    );
+
+});
+
+
+// ======================================================
+// 404 HANDLER
+// ======================================================
+
+app.use((req, res) => {
+
+    res.status(404).send(
+
+        `❌ Cannot find: ${req.method} ${req.originalUrl}`
+
+    );
+
+});
+
+
+// ======================================================
 // START SERVER
-// ==========================================
+// ======================================================
 
 const PORT =
     process.env.PORT || 3000;
 
 
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
 
-    console.log("=================================");
-    console.log("🚀 Smart Restaurant Server Started");
-    console.log("=================================");
+        console.log(
+            "================================="
+        );
 
-    console.log(
-        `💻 Local: http://localhost:${PORT}`
-    );
+        console.log(
+            "🚀 Smart Restaurant Server Started"
+        );
 
-    console.log(
-        "📱 Network: http://10.29.95.40:3000"
-    );
+        console.log(
+            "================================="
+        );
 
-    console.log(
-        "📂 Frontend: /frontend"
-    );
+        console.log(
+            `💻 Local: http://localhost:${PORT}`
+        );
 
-    console.log("=================================");
+        console.log(
+            `🌐 Server Port: ${PORT}`
+        );
 
-});
+        console.log(
+            "📂 Frontend: frontend/"
+        );
+
+        console.log(
+            "================================="
+        );
+
+    }
+);
