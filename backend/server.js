@@ -7,6 +7,7 @@ const path = require("path");
 
 const app = express();
 
+
 // ======================================================
 // MIDDLEWARE
 // ======================================================
@@ -43,8 +44,7 @@ const DB_PORT =
     3306;
 
 const DB_USER =
-    process.env.DB_USER ||
-    process.env.MYSQLUSER;
+    process.env.DB_USER || process.env.MYSQLUSER;
 
 const DB_PASSWORD =
     process.env.DB_PASSWORD ||
@@ -60,105 +60,18 @@ const DB_NAME =
 // ======================================================
 
 const db = mysql.createConnection({
+
     host: DB_HOST,
+
     port: Number(DB_PORT),
+
     user: DB_USER,
+
     password: DB_PASSWORD,
+
     database: DB_NAME
+
 });
-
-
-// ======================================================
-// DATABASE INITIALIZATION
-// ======================================================
-
-function initializeDatabase() {
-
-    // --------------------------------------------------
-    // CREATE RESTAURANT TABLES
-    // --------------------------------------------------
-
-    const createTablesSQL = `
-
-        CREATE TABLE IF NOT EXISTS restaurant_tables (
-
-            id INT AUTO_INCREMENT PRIMARY KEY,
-
-            table_number INT NOT NULL UNIQUE,
-
-            status VARCHAR(20) NOT NULL DEFAULT 'Available'
-
-        )
-
-    `;
-
-
-    db.query(createTablesSQL, (err) => {
-
-        if (err) {
-
-            console.log(
-                "❌ Failed to create restaurant_tables:",
-                err.message
-            );
-
-            return;
-
-        }
-
-
-        console.log(
-            "✅ restaurant_tables table ready!"
-        );
-
-
-        // --------------------------------------------------
-        // INSERT 10 TABLES
-        // --------------------------------------------------
-
-        const insertTablesSQL = `
-
-            INSERT IGNORE INTO restaurant_tables
-            (table_number, status)
-
-            VALUES
-            (1, 'Available'),
-            (2, 'Available'),
-            (3, 'Available'),
-            (4, 'Available'),
-            (5, 'Available'),
-            (6, 'Available'),
-            (7, 'Available'),
-            (8, 'Available'),
-            (9, 'Available'),
-            (10, 'Available')
-
-        `;
-
-
-        db.query(insertTablesSQL, (err) => {
-
-            if (err) {
-
-                console.log(
-                    "❌ Failed to insert restaurant tables:",
-                    err.message
-                );
-
-                return;
-
-            }
-
-
-            console.log(
-                "✅ Tables 1-10 are ready!"
-            );
-
-        });
-
-    });
-
-}
 
 
 // ======================================================
@@ -175,9 +88,7 @@ db.connect((err) => {
         );
 
         return;
-
     }
-
 
     console.log(
         "================================="
@@ -191,10 +102,99 @@ db.connect((err) => {
         "================================="
     );
 
-
-    initializeDatabase();
-
 });
+
+
+// ======================================================
+// CREATE TABLES IF NOT EXISTS
+// ======================================================
+
+function setupTables() {
+
+    const createTablesSQL = `
+
+        CREATE TABLE IF NOT EXISTS restaurant_tables (
+
+            id INT AUTO_INCREMENT PRIMARY KEY,
+
+            table_number INT NOT NULL UNIQUE,
+
+            status VARCHAR(20) DEFAULT 'Available'
+
+        )
+
+    `;
+
+
+    db.query(
+        createTablesSQL,
+        (err) => {
+
+            if (err) {
+
+                console.log(
+                    "❌ restaurant_tables creation failed:",
+                    err.message
+                );
+
+                return;
+            }
+
+
+            console.log(
+                "✅ restaurant_tables table ready!"
+            );
+
+
+            // --------------------------------------------------
+            // INSERT TABLES 1 - 10
+            // --------------------------------------------------
+
+            const insertTableSQL = `
+
+                INSERT IGNORE INTO restaurant_tables
+                (table_number, status)
+
+                VALUES
+                (?, 'Available')
+
+            `;
+
+
+            for (
+                let table = 1;
+                table <= 10;
+                table++
+            ) {
+
+                db.query(
+                    insertTableSQL,
+                    [table],
+                    (err) => {
+
+                        if (err) {
+
+                            console.log(
+                                `❌ Table ${table} creation failed:`,
+                                err.message
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            console.log(
+                "✅ Tables 1-10 are ready!"
+            );
+
+        }
+    );
+
+}
 
 
 // ======================================================
@@ -300,10 +300,6 @@ app.post("/api/orders", (req, res) => {
             }
 
 
-            // --------------------------------------------------
-            // TABLE OCCUPIED
-            // --------------------------------------------------
-
             if (
                 tableResults[0].status === "Occupied"
             ) {
@@ -374,7 +370,7 @@ app.post("/api/orders", (req, res) => {
 
 
                     console.log(
-                        `✅ Order #${orderId} saved`
+                        `✅ Order ${orderId} saved to MySQL!`
                     );
 
 
@@ -396,7 +392,7 @@ app.post("/api/orders", (req, res) => {
                     db.query(
                         updateTableSQL,
                         [table],
-                        (err, result) => {
+                        (err, tableUpdateResult) => {
 
                             if (err) {
 
@@ -406,10 +402,17 @@ app.post("/api/orders", (req, res) => {
                                 );
 
 
-                                // Rollback order
+                                const deleteOrderSQL = `
+
+                                    DELETE FROM orders
+
+                                    WHERE id = ?
+
+                                `;
+
 
                                 db.query(
-                                    "DELETE FROM orders WHERE id = ?",
+                                    deleteOrderSQL,
                                     [orderId]
                                 );
 
@@ -420,22 +423,6 @@ app.post("/api/orders", (req, res) => {
 
                                     message:
                                         "Could not occupy table"
-
-                                });
-
-                            }
-
-
-                            if (
-                                result.affectedRows === 0
-                            ) {
-
-                                return res.status(500).json({
-
-                                    success: false,
-
-                                    message:
-                                        "Table could not be occupied"
 
                                 });
 
@@ -773,11 +760,7 @@ app.get("/api/payments/pending", (req, res) => {
 // + MAKE TABLE AVAILABLE
 // ======================================================
 
-app.put("/api/payments/:id", (req, res) => {
-
-    const orderId =
-        req.params.id;
-
+function processPayment(orderId, res) {
 
     const getOrderSQL = `
 
@@ -874,10 +857,6 @@ app.put("/api/payments/:id", (req, res) => {
             }
 
 
-            // --------------------------------------------------
-            // MARK PAID
-            // --------------------------------------------------
-
             const paymentSQL = `
 
                 UPDATE orders
@@ -936,10 +915,6 @@ app.put("/api/payments/:id", (req, res) => {
                     );
 
 
-                    // --------------------------------------------------
-                    // TABLE AVAILABLE
-                    // --------------------------------------------------
-
                     const tableSQL = `
 
                         UPDATE restaurant_tables
@@ -954,7 +929,7 @@ app.put("/api/payments/:id", (req, res) => {
                     db.query(
                         tableSQL,
                         [tableNumber],
-                        (err, tableResult) => {
+                        (err) => {
 
                             if (err) {
 
@@ -1002,6 +977,35 @@ app.put("/api/payments/:id", (req, res) => {
             );
 
         }
+    );
+
+}
+
+
+// ======================================================
+// PAYMENT ROUTE 1
+// ======================================================
+
+app.put("/api/payments/:id", (req, res) => {
+
+    processPayment(
+        req.params.id,
+        res
+    );
+
+});
+
+
+// ======================================================
+// PAYMENT ROUTE 2
+// BILLING.HTML SUPPORT
+// ======================================================
+
+app.put("/api/orders/:id/payment", (req, res) => {
+
+    processPayment(
+        req.params.id,
+        res
     );
 
 });
@@ -1305,9 +1309,10 @@ app.put(
 
 
 // ======================================================
-// FRONTEND SHORTCUT ROUTES
+// FRONTEND PAGE ROUTES
 // ======================================================
 
+// Customer menu
 app.get("/menu.html", (req, res) => {
 
     res.sendFile(
@@ -1317,15 +1322,57 @@ app.get("/menu.html", (req, res) => {
 });
 
 
-app.get("/status.html", (req, res) => {
+// Kitchen
+app.get("/kitchen.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "status.html")
+        path.join(frontendPath, "kitchen.html")
     );
 
 });
 
 
+// Billing
+app.get("/billing.html", (req, res) => {
+
+    res.sendFile(
+        path.join(frontendPath, "billing.html")
+    );
+
+});
+
+
+// Order history
+app.get("/order-history.html", (req, res) => {
+
+    res.sendFile(
+        path.join(frontendPath, "order-history.html")
+    );
+
+});
+
+
+// Order status
+app.get("/order-status.html", (req, res) => {
+
+    res.sendFile(
+        path.join(frontendPath, "order-status.html")
+    );
+
+});
+
+
+// Old status URL support
+app.get("/status.html", (req, res) => {
+
+    res.sendFile(
+        path.join(frontendPath, "order-status.html")
+    );
+
+});
+
+
+// Bill
 app.get("/bill.html", (req, res) => {
 
     res.sendFile(
@@ -1335,31 +1382,48 @@ app.get("/bill.html", (req, res) => {
 });
 
 
-// ======================================================
-// HEALTH CHECK
-// ======================================================
+// QR tables
+app.get("/qr-tables.html", (req, res) => {
 
-app.get("/api/health", (req, res) => {
+    res.sendFile(
+        path.join(frontendPath, "qr-tables.html")
+    );
 
-    res.json({
+});
 
-        success: true,
 
-        message:
-            "Smart Restaurant server is running",
+// Cashier
+app.get("/cashier.html", (req, res) => {
 
-        database:
-            db.state === "authenticated"
-                ? "connected"
-                : "not connected"
+    res.sendFile(
+        path.join(frontendPath, "cashier.html")
+    );
 
-    });
+});
+
+
+// Admin
+app.get("/admin.html", (req, res) => {
+
+    res.sendFile(
+        path.join(frontendPath, "admin.html")
+    );
+
+});
+
+
+// Tables
+app.get("/tables.html", (req, res) => {
+
+    res.sendFile(
+        path.join(frontendPath, "tables.html")
+    );
 
 });
 
 
 // ======================================================
-// 404
+// 404 HANDLER
 // ======================================================
 
 app.use((req, res) => {
@@ -1413,6 +1477,9 @@ app.listen(
         console.log(
             "================================="
         );
+
+        // Setup database tables
+        setupTables();
 
     }
 );
