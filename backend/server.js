@@ -115,6 +115,7 @@ db.connect((err) => {
 
     console.log(
         "================================="
+
     );
 
 });
@@ -220,7 +221,7 @@ function setupTables() {
 //
 // https://smart-restaurant-3axh.onrender.com/
 //
-// This opens QR TABLE PAGE.
+// This will now open QR TABLE PAGE.
 // It will NOT open index.html.
 // ======================================================
 
@@ -1343,6 +1344,7 @@ app.put(
 // ------------------------------------------------------
 // CUSTOMER MENU
 //
+// IMPORTANT:
 // /menu.html → customer menu
 // /menu.html?table=1 → Table 1 customer menu
 // ------------------------------------------------------
@@ -1407,14 +1409,36 @@ app.get("/order-history.html", (req, res) => {
 });
 
 
-// ======================================================
-// ORDER STATUS REMOVED
-//
-// /order-status.html
-// /status.html
-//
-// These old pages are no longer used.
-// ======================================================
+// ------------------------------------------------------
+// ORDER STATUS
+// ------------------------------------------------------
+
+app.get("/order-status.html", (req, res) => {
+
+    res.sendFile(
+        path.join(
+            frontendPath,
+            "order-status.html"
+        )
+    );
+
+});
+
+
+// ------------------------------------------------------
+// OLD STATUS URL SUPPORT
+// ------------------------------------------------------
+
+app.get("/status.html", (req, res) => {
+
+    res.sendFile(
+        path.join(
+            frontendPath,
+            "order-status.html"
+        )
+    );
+
+});
 
 
 // ------------------------------------------------------
@@ -1555,26 +1579,6 @@ app.listen(
 
         console.log(
             "🍽️ Menu: /menu.html"
-        );
-
-        console.log(
-            "🍳 Kitchen: /kitchen.html"
-        );
-
-        console.log(
-            "💰 Billing: /billing.html"
-        );
-
-        console.log(
-            "🧾 History: /order-history.html"
-        );
-
-        console.log(
-            "🖨️ Bill: /bill.html"
-        );
-
-        console.log(
-            "📱 QR Tables: /qr-tables.html"
         );
 
         console.log(
