@@ -12,228 +12,133 @@
 
     <title>QResto - Billing Dashboard</title>
 
-
     <style>
 
         * {
             box-sizing: border-box;
         }
 
-
         body {
-
             margin: 0;
-
             font-family: Arial, sans-serif;
-
             background: #f6f1e8;
-
         }
-
 
         header {
-
             background: #6b1e1e;
-
             color: white;
-
             text-align: center;
-
             padding: 25px;
-
         }
-
 
         header h1 {
-
             margin: 0;
-
         }
-
 
         header p {
-
             margin-bottom: 0;
-
         }
-
 
         .container {
-
             width: 90%;
-
             max-width: 1200px;
-
             margin: 30px auto;
-
         }
-
 
         .container > h2 {
-
             text-align: center;
-
             color: #6b1e1e;
-
             margin-bottom: 25px;
-
         }
-
 
         .orders {
-
             display: grid;
-
             grid-template-columns:
                 repeat(auto-fit, minmax(300px, 1fr));
-
             gap: 25px;
-
         }
 
-
         .bill-card {
-
             background: white;
-
             padding: 20px;
-
             border-radius: 15px;
 
             box-shadow:
                 0 5px 15px rgba(0, 0, 0, 0.15);
-
         }
-
 
         .bill-card h2 {
-
             margin-top: 0;
-
             color: #6b1e1e;
-
         }
-
 
         .bill-card ul {
-
             padding-left: 20px;
-
             line-height: 1.8;
-
         }
-
 
         .total {
-
             font-size: 20px;
-
             font-weight: bold;
-
         }
-
 
         .payment {
-
             font-weight: bold;
-
             margin: 15px 0;
-
         }
-
 
         .pending {
-
             color: #d89b00;
-
         }
-
-
-        .paid {
-
-            color: green;
-
-        }
-
 
         button {
-
             width: 100%;
-
             padding: 12px;
-
             border: none;
-
             border-radius: 10px;
 
             background: #d89b00;
-
             color: white;
 
             font-size: 16px;
-
             font-weight: bold;
 
             cursor: pointer;
-
         }
-
 
         button:hover {
-
             background: #b77d00;
-
         }
-
 
         button:disabled {
-
             background: #777;
-
             cursor: not-allowed;
-
         }
 
-
         .no-orders {
-
             text-align: center;
-
             font-size: 18px;
-
             color: #666;
-
             padding: 30px;
 
             grid-column: 1 / -1;
-
         }
-
 
         .error {
-
             color: #b00000;
-
         }
 
-
         .refresh-info {
-
             text-align: center;
-
             color: #777;
 
             margin-bottom: 20px;
 
             font-size: 14px;
-
         }
 
-
         .order-status {
-
             padding: 8px 12px;
-
             border-radius: 8px;
 
             background: #f6f1e8;
@@ -241,23 +146,16 @@
             display: inline-block;
 
             font-weight: bold;
-
         }
-
 
         @media (max-width: 600px) {
 
             .container {
-
                 width: 94%;
-
             }
 
-
             .bill-card {
-
                 padding: 17px;
-
             }
 
         }
@@ -273,7 +171,6 @@
     <!-- ==========================================
          HEADER
     ========================================== -->
-
 
     <header>
 
@@ -292,21 +189,17 @@
          MAIN
     ========================================== -->
 
-
     <div class="container">
 
-
         <h2>
-            🧾 Orders & Billing
+            🧾 Pending Bills
         </h2>
-
 
         <div class="refresh-info">
 
             🔄 Automatically refreshing every 5 seconds
 
         </div>
-
 
         <div
             class="orders"
@@ -315,12 +208,11 @@
 
             <div class="no-orders">
 
-                ⏳ Loading orders...
+                ⏳ Loading bills...
 
             </div>
 
         </div>
-
 
     </div>
 
@@ -331,22 +223,6 @@
         // ==================================================
         // SERVER URL
         // ==================================================
-
-        /*
-            IMPORTANT:
-
-            DO NOT USE:
-
-            http://localhost:3000
-
-            Render deployment uses the current website
-            origin automatically.
-
-            Example:
-
-            https://smart-restaurant-3axh.onrender.com
-        */
-
 
         const SERVER_URL =
             window.location.origin;
@@ -359,9 +235,8 @@
 
 
         // ==================================================
-        // LOAD ORDERS
+        // LOAD ONLY PENDING PAYMENTS
         // ==================================================
-
 
         async function loadOrders() {
 
@@ -374,22 +249,40 @@
 
 
                 console.log(
-                    "📡 Loading orders..."
+                    "📡 Loading pending payments..."
                 );
+
+
+                /*
+                    IMPORTANT:
+
+                    We use:
+
+                    /api/payments/pending
+
+                    Instead of:
+
+                    /api/orders
+
+                    So Paid bills will NOT appear here.
+                */
 
 
                 const response =
                     await fetch(
-                        `${SERVER_URL}/api/orders`,
+
+                        `${SERVER_URL}/api/payments/pending`,
+
                         {
                             method: "GET",
                             cache: "no-store"
                         }
+
                     );
 
 
                 console.log(
-                    "📥 Orders response:",
+                    "📥 Pending payments response:",
                     response.status
                 );
 
@@ -408,7 +301,7 @@
 
 
                 console.log(
-                    "📦 Orders data:",
+                    "📦 Pending payment data:",
                     data
                 );
 
@@ -417,9 +310,8 @@
 
 
                 // ==================================================
-                // NO ORDERS
+                // NO PENDING BILLS
                 // ==================================================
-
 
                 if (
                     !data.success ||
@@ -427,17 +319,19 @@
                     data.orders.length === 0
                 ) {
 
-
                     ordersContainer.innerHTML = `
 
                         <div class="no-orders">
 
-                            🧾 No orders found
+                            ✅ No pending bills
+
+                            <br><br>
+
+                            All payments are completed.
 
                         </div>
 
                     `;
-
 
                     return;
 
@@ -445,9 +339,8 @@
 
 
                 // ==================================================
-                // DISPLAY ORDERS
+                // DISPLAY ONLY PENDING BILLS
                 // ==================================================
-
 
                 data.orders.forEach(order => {
 
@@ -459,9 +352,7 @@
                     // CONVERT ITEMS JSON
                     // ==================================================
 
-
                     try {
-
 
                         if (
                             typeof order.items ===
@@ -482,17 +373,14 @@
 
                         }
 
-
                     }
 
                     catch (error) {
-
 
                         console.error(
                             "❌ Items JSON error:",
                             error
                         );
-
 
                         items = [];
 
@@ -502,7 +390,6 @@
                     // ==================================================
                     // ITEMS HTML
                     // ==================================================
-
 
                     let itemsHTML = "";
 
@@ -537,6 +424,7 @@
                                 × ${quantity}
 
                                 -
+
                                 ₹${itemTotal.toFixed(2)}
 
                             </li>
@@ -547,80 +435,8 @@
 
 
                     // ==================================================
-                    // PAYMENT STATUS
+                    // CREATE BILL CARD
                     // ==================================================
-
-
-                    const paymentStatus =
-                        order.payment_status ||
-                        "Pending";
-
-
-                    let paymentHTML = "";
-
-
-                    if (
-                        paymentStatus ===
-                        "Paid"
-                    ) {
-
-
-                        paymentHTML = `
-
-                            <p class="payment paid">
-
-                                💰 Payment:
-
-                                <strong>
-                                    ✅ Paid
-                                </strong>
-
-                            </p>
-
-
-                            <button disabled>
-
-                                ✅ Payment Completed
-
-                            </button>
-
-                        `;
-
-                    }
-
-                    else {
-
-
-                        paymentHTML = `
-
-                            <p class="payment pending">
-
-                                💰 Payment:
-
-                                <strong>
-                                    🟡 Pending
-                                </strong>
-
-                            </p>
-
-
-                            <button
-                                onclick="markPaid(${order.id})"
-                            >
-
-                                💳 Mark as Paid
-
-                            </button>
-
-                        `;
-
-                    }
-
-
-                    // ==================================================
-                    // CREATE CARD
-                    // ==================================================
-
 
                     ordersContainer.innerHTML += `
 
@@ -681,12 +497,33 @@
 
                                 💰 Total:
 
-                                ₹${Number(order.total || 0).toFixed(2)}
+                                ₹${Number(
+                                    order.total || 0
+                                ).toFixed(2)}
 
                             </p>
 
 
-                            ${paymentHTML}
+                            <p class="payment pending">
+
+                                💰 Payment:
+
+                                <strong>
+
+                                    🟡 Pending
+
+                                </strong>
+
+                            </p>
+
+
+                            <button
+                                onclick="markPaid(${order.id})"
+                            >
+
+                                💳 Mark as Paid
+
+                            </button>
 
 
                         </div>
@@ -739,7 +576,6 @@
         // MARK PAYMENT AS PAID
         // ==================================================
 
-
         async function markPaid(orderId) {
 
 
@@ -771,19 +607,8 @@
 
 
                 // ==================================================
-                // IMPORTANT
+                // PAYMENT API
                 // ==================================================
-
-                /*
-                    Backend route is:
-
-                    PUT /api/payments/:id
-
-                    NOT:
-
-                    /api/orders/:id/payment
-                */
-
 
                 const response =
                     await fetch(
@@ -826,7 +651,6 @@
                 // SUCCESS
                 // ==================================================
 
-
                 if (
                     response.ok &&
                     data.success
@@ -841,12 +665,20 @@
 
                         `🪑 Table: ${data.table || ""}\n\n` +
 
-                        `Table is now Available.`
+                        `🟢 Table is now Available.`
 
                     );
 
 
-                    // Reload immediately
+                    /*
+                        IMPORTANT:
+
+                        Reload pending payments.
+
+                        Since payment_status is now Paid,
+                        this order will disappear
+                        automatically from Billing Dashboard.
+                    */
 
                     loadOrders();
 
@@ -857,7 +689,6 @@
                 // ==================================================
                 // ERROR
                 // ==================================================
-
 
                 else {
 
@@ -905,14 +736,12 @@
         // FIRST LOAD
         // ==================================================
 
-
         loadOrders();
 
 
         // ==================================================
         // AUTO REFRESH
         // ==================================================
-
 
         setInterval(
 
