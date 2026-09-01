@@ -204,7 +204,7 @@ function setupTables() {
 app.get("/", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "index.html")
+        path.join(frontendPath, "qr-tables.html")
     );
 
 });
