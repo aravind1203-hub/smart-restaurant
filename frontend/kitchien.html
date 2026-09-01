@@ -2,8 +2,11 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>QResto - Kitchen Dashboard</title>
 
@@ -48,10 +51,8 @@
 
         .orders {
             display: grid;
-            grid-template-columns: repeat(
-                auto-fit,
-                minmax(280px, 1fr)
-            );
+            grid-template-columns:
+                repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
         }
 
@@ -77,6 +78,14 @@
         .status {
             font-weight: bold;
             margin: 15px 0;
+        }
+
+        .pending {
+            color: #d89b00;
+        }
+
+        .preparing {
+            color: #e67e22;
         }
 
         button {
@@ -111,11 +120,17 @@
             padding: 30px;
         }
 
-        .server-info {
+        .error {
             text-align: center;
-            margin-top: 15px;
-            font-size: 13px;
-            color: #777;
+            color: #6b1e1e;
+            font-weight: bold;
+            padding: 30px;
+        }
+
+        .refresh-info {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
         }
 
     </style>
@@ -124,11 +139,6 @@
 
 
 <body>
-
-
-    <!-- ==========================================
-         HEADER
-    ========================================== -->
 
     <header>
 
@@ -139,21 +149,17 @@
     </header>
 
 
-    <!-- ==========================================
-         MAIN CONTAINER
-    ========================================== -->
-
     <div class="container">
 
-        <h2>
-            🆕 New Orders
-        </h2>
+        <h2>🆕 Kitchen Orders</h2>
 
+        <p class="refresh-info">
+            🔄 Automatically refreshes every 5 seconds
+        </p>
 
         <div
             class="orders"
-            id="orders"
-        >
+            id="orders">
 
             <div class="no-orders">
                 Loading orders...
@@ -161,99 +167,41 @@
 
         </div>
 
-
-        <div
-            class="server-info"
-            id="server-info"
-        ></div>
-
     </div>
 
 
-    <!-- ==========================================
-         JAVASCRIPT
-    ========================================== -->
-
     <script>
 
+        // ==================================================
+        // LIVE SERVER
+        // ==================================================
 
-        // ==========================================
-        // SERVER URL
-        // ==========================================
+        // IMPORTANT:
+        // Do NOT use localhost here.
+        // Empty string means same Render server.
 
-        /*
-            Local:
-            http://localhost:3000
-
-            Render:
-            https://smart-restaurant-3axh.onrender.com
-
-            Same server frontend + backend என்பதால்
-            window.location.origin use செய்கிறோம்.
-        */
-
-        const SERVER_URL =
-            "https://smart-restaurant-3axh.onrender.com";
+        const SERVER_URL = "";
 
 
-        console.log(
-            "🌐 SERVER URL:",
-            SERVER_URL
-        );
-
-
-        // Show server URL
-
-        document.getElementById(
-            "server-info"
-        ).textContent =
-            `Server: ${SERVER_URL}`;
-
-
-        // ==========================================
+        // ==================================================
         // LOAD ORDERS
-        // ==========================================
+        // ==================================================
 
         async function loadOrders() {
 
             const ordersContainer =
-                document.getElementById(
-                    "orders"
-                );
+                document.getElementById("orders");
 
 
             try {
 
-                console.log(
-                    "📡 Loading orders..."
+                const response = await fetch(
+                    `${SERVER_URL}/api/orders`,
+                    {
+                        cache: "no-store"
+                    }
                 );
 
-
-                const response =
-                    await fetch(
-                        `${SERVER_URL}/api/orders`,
-                        {
-                            method: "GET",
-
-                            headers: {
-                                "Accept":
-                                    "application/json"
-                            },
-
-                            cache: "no-store"
-                        }
-                    );
-
-
-                console.log(
-                    "📥 Orders response:",
-                    response.status
-                );
-
-
-                // ==========================================
-                // SERVER ERROR
-                // ==========================================
 
                 if (!response.ok) {
 
@@ -264,70 +212,34 @@
                 }
 
 
-                // ==========================================
-                // READ JSON
-                // ==========================================
-
                 const data =
                     await response.json();
 
 
                 console.log(
-                    "📦 Orders data:",
+                    "✅ Orders received:",
                     data
                 );
-
-
-                if (!data.success) {
-
-                    throw new Error(
-                        data.message ||
-                        "Could not load orders"
-                    );
-
-                }
 
 
                 ordersContainer.innerHTML = "";
 
 
-                // ==========================================
-                // GET ORDERS
-                // ==========================================
-
-                const allOrders =
-                    Array.isArray(data.orders)
-                        ? data.orders
-                        : [];
-
-
-                // ==========================================
-                // FILTER KITCHEN ORDERS
-                // ==========================================
-
-                const kitchenOrders =
-                    allOrders.filter(order =>
-
-                        order.status === "Pending" ||
-
-                        order.status === "Preparing"
-
-                    );
-
-
-                // ==========================================
+                // ==================================================
                 // NO ORDERS
-                // ==========================================
+                // ==================================================
 
                 if (
-                    kitchenOrders.length === 0
+                    !data.success ||
+                    !data.orders ||
+                    data.orders.length === 0
                 ) {
 
                     ordersContainer.innerHTML = `
 
                         <div class="no-orders">
 
-                            🍽️ No new orders
+                            🍽️ No orders yet
 
                         </div>
 
@@ -338,16 +250,46 @@
                 }
 
 
-                // ==========================================
+                // ==================================================
+                // ONLY PENDING / PREPARING
+                // ==================================================
+
+                const kitchenOrders =
+                    data.orders.filter(order =>
+
+                        order.status === "Pending" ||
+                        order.status === "Preparing"
+
+                    );
+
+
+                if (kitchenOrders.length === 0) {
+
+                    ordersContainer.innerHTML = `
+
+                        <div class="no-orders">
+
+                            ✅ No active kitchen orders
+
+                        </div>
+
+                    `;
+
+                    return;
+
+                }
+
+
+                // ==================================================
                 // DISPLAY ORDERS
-                // ==========================================
+                // ==================================================
 
                 kitchenOrders.forEach(order => {
 
 
-                    // ==========================================
+                    // ----------------------------------------------
                     // ITEMS
-                    // ==========================================
+                    // ----------------------------------------------
 
                     let items = [];
 
@@ -355,25 +297,18 @@
                     try {
 
                         if (
-                            typeof order.items ===
-                            "string"
+                            typeof order.items === "string"
                         ) {
 
                             items =
-                                JSON.parse(
-                                    order.items
-                                );
+                                JSON.parse(order.items);
 
                         }
 
-                        else if (
-                            Array.isArray(
-                                order.items
-                            )
-                        ) {
+                        else {
 
                             items =
-                                order.items;
+                                order.items || [];
 
                         }
 
@@ -391,28 +326,24 @@
                     }
 
 
-                    // ==========================================
+                    // ----------------------------------------------
                     // ITEMS HTML
-                    // ==========================================
+                    // ----------------------------------------------
 
                     let itemsHTML = "";
 
 
                     items.forEach(item => {
 
-                        const quantity =
-                            Number(
-                                item.quantity
-                            ) || 1;
-
-
                         itemsHTML += `
 
                             <li>
 
-                                ${item.name}
+                                <strong>
+                                    ${item.name}
+                                </strong>
 
-                                × ${quantity}
+                                × ${item.quantity}
 
                             </li>
 
@@ -421,18 +352,31 @@
                     });
 
 
-                    // ==========================================
+                    // ----------------------------------------------
                     // STATUS
-                    // ==========================================
+                    // ----------------------------------------------
 
                     const status =
-                        order.status ||
-                        "Pending";
+                        order.status || "Pending";
 
 
-                    // ==========================================
+                    let statusClass =
+                        "pending";
+
+
+                    if (
+                        status === "Preparing"
+                    ) {
+
+                        statusClass =
+                            "preparing";
+
+                    }
+
+
+                    // ----------------------------------------------
                     // BUTTON
-                    // ==========================================
+                    // ----------------------------------------------
 
                     let buttonHTML = "";
 
@@ -444,11 +388,7 @@
                         buttonHTML = `
 
                             <button
-                                onclick="
-                                    startPreparing(
-                                        ${order.id}
-                                    )
-                                "
+                                onclick="startPreparing(${order.id})"
                             >
 
                                 👨‍🍳 Start Preparing
@@ -467,11 +407,7 @@
                         buttonHTML = `
 
                             <button
-                                onclick="
-                                    markReady(
-                                        ${order.id}
-                                    )
-                                "
+                                onclick="markReady(${order.id})"
                             >
 
                                 ✅ Mark as Ready
@@ -483,9 +419,9 @@
                     }
 
 
-                    // ==========================================
+                    // ----------------------------------------------
                     // ORDER CARD
-                    // ==========================================
+                    // ----------------------------------------------
 
                     ordersContainer.innerHTML += `
 
@@ -503,18 +439,14 @@
                                 🪑 Table:
 
                                 <strong>
-
                                     ${order.table_number}
-
                                 </strong>
 
                             </p>
 
 
                             <h3>
-
                                 🍛 Items
-
                             </h3>
 
 
@@ -528,20 +460,18 @@
                             <p>
 
                                 <strong>
-
                                     💰 Total:
-                                    ₹${Number(
-                                        order.total
-                                    ).toFixed(2)}
-
+                                    ₹${order.total}
                                 </strong>
 
                             </p>
 
 
-                            <p class="status">
+                            <p
+                                class="status ${statusClass}"
+                            >
 
-                                📌 Status:
+                                Status:
                                 ${status}
 
                             </p>
@@ -555,31 +485,26 @@
 
                 });
 
-
             }
 
 
             catch (error) {
 
                 console.error(
-                    "❌ Cannot load orders:",
+                    "❌ Cannot load kitchen orders:",
                     error
                 );
 
 
                 ordersContainer.innerHTML = `
 
-                    <div class="no-orders">
+                    <div class="error">
 
                         ❌ Cannot connect to restaurant server
 
                         <br><br>
 
-                        <small>
-
-                            ${error.message}
-
-                        </small>
+                        Please check Render server.
 
                     </div>
 
@@ -590,57 +515,37 @@
         }
 
 
-        // ==========================================
-        // UPDATE ORDER STATUS
-        // ==========================================
+        // ==================================================
+        // PENDING → PREPARING
+        // ==================================================
 
-        async function updateOrderStatus(
-            orderId,
-            status
-        ) {
+        async function startPreparing(orderId) {
 
             try {
 
-                console.log(
-                    `📡 Updating Order ${orderId} → ${status}`
-                );
+                const response = await fetch(
 
+                    `${SERVER_URL}/api/orders/${orderId}/status`,
 
-                const response =
-                    await fetch(
+                    {
 
-                        `${SERVER_URL}/api/orders/${orderId}/status`,
+                        method: "PUT",
 
-                        {
+                        headers: {
 
-                            method: "PUT",
+                            "Content-Type":
+                                "application/json"
 
-                            headers: {
+                        },
 
-                                "Content-Type":
-                                    "application/json",
+                        body: JSON.stringify({
 
-                                "Accept":
-                                    "application/json"
+                            status: "Preparing"
 
-                            },
+                        })
 
-                            body:
-                                JSON.stringify({
+                    }
 
-                                    status:
-                                        status
-
-                                })
-
-                        }
-
-                    );
-
-
-                console.log(
-                    "📥 Status response:",
-                    response.status
                 );
 
 
@@ -649,40 +554,32 @@
 
 
                 console.log(
-                    "📦 Status data:",
+                    "Status response:",
                     data
                 );
 
 
-                if (!response.ok) {
+                if (data.success) {
 
-                    throw new Error(
+                    alert(
+                        "👨‍🍳 Order is now Preparing!"
+                    );
 
-                        data.message ||
+                    loadOrders();
 
-                        `Server error: ${response.status}`
+                }
 
+                else {
+
+                    alert(
+                        "❌ " +
+                        (
+                            data.message ||
+                            "Could not update order"
+                        )
                     );
 
                 }
-
-
-                if (
-                    data.success
-                ) {
-
-                    return true;
-
-                }
-
-
-                throw new Error(
-
-                    data.message ||
-
-                    "Could not update order"
-
-                );
 
             }
 
@@ -690,147 +587,121 @@
             catch (error) {
 
                 console.error(
-                    "❌ Status update error:",
+                    "❌ Preparing error:",
                     error
                 );
 
-
                 alert(
-
-                    "❌ Could not connect to restaurant server!\n\n" +
-
-                    error.message
-
+                    "❌ Cannot connect to server!"
                 );
-
-
-                return false;
 
             }
 
         }
 
 
-        // ==========================================
-        // PENDING → PREPARING
-        // ==========================================
-
-        async function startPreparing(
-            orderId
-        ) {
-
-            const confirmed =
-                confirm(
-
-                    `👨‍🍳 Start preparing Order #${orderId}?`
-
-                );
-
-
-            if (!confirmed) {
-
-                return;
-
-            }
-
-
-            const success =
-                await updateOrderStatus(
-
-                    orderId,
-
-                    "Preparing"
-
-                );
-
-
-            if (success) {
-
-                alert(
-
-                    `👨‍🍳 Order #${orderId} is now Preparing!`
-
-                );
-
-
-                loadOrders();
-
-            }
-
-        }
-
-
-        // ==========================================
+        // ==================================================
         // PREPARING → READY
-        // ==========================================
+        // ==================================================
 
-        async function markReady(
-            orderId
-        ) {
+        async function markReady(orderId) {
 
-            const confirmed =
-                confirm(
+            try {
 
-                    `✅ Mark Order #${orderId} as Ready?`
+                const response = await fetch(
+
+                    `${SERVER_URL}/api/orders/${orderId}/status`,
+
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+
+                            "Content-Type":
+                                "application/json"
+
+                        },
+
+                        body: JSON.stringify({
+
+                            status: "Ready"
+
+                        })
+
+                    }
 
                 );
 
 
-            if (!confirmed) {
+                const data =
+                    await response.json();
 
-                return;
+
+                console.log(
+                    "Ready response:",
+                    data
+                );
+
+
+                if (data.success) {
+
+                    alert(
+                        "✅ Order is Ready!"
+                    );
+
+                    loadOrders();
+
+                }
+
+                else {
+
+                    alert(
+                        "❌ " +
+                        (
+                            data.message ||
+                            "Could not update order"
+                        )
+                    );
+
+                }
 
             }
 
 
-            const success =
-                await updateOrderStatus(
+            catch (error) {
 
-                    orderId,
-
-                    "Ready"
-
+                console.error(
+                    "❌ Ready error:",
+                    error
                 );
-
-
-            if (success) {
 
                 alert(
-
-                    `✅ Order #${orderId} is Ready!`
-
+                    "❌ Cannot connect to server!"
                 );
-
-
-                loadOrders();
 
             }
 
         }
 
 
-        // ==========================================
+        // ==================================================
         // FIRST LOAD
-        // ==========================================
+        // ==================================================
 
         loadOrders();
 
 
-        // ==========================================
+        // ==================================================
         // AUTO REFRESH
-        // ==========================================
+        // ==================================================
 
         setInterval(
-
             loadOrders,
-
             5000
-
         );
 
-
     </script>
-
 
 </body>
 
