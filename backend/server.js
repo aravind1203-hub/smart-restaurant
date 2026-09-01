@@ -24,11 +24,24 @@ const frontendPath = path.join(__dirname, "..", "frontend");
 
 
 // ======================================================
-// SERVE FRONTEND
+// SERVE FRONTEND FILES
+// IMPORTANT:
+// index: false prevents Express from automatically opening
+// frontend/index.html when visiting "/"
 // ======================================================
 
-app.use("/frontend", express.static(frontendPath));
-app.use(express.static(frontendPath));
+app.use(
+    "/frontend",
+    express.static(frontendPath, {
+        index: false
+    })
+);
+
+app.use(
+    express.static(frontendPath, {
+        index: false
+    })
+);
 
 
 // ======================================================
@@ -36,7 +49,8 @@ app.use(express.static(frontendPath));
 // ======================================================
 
 const DB_HOST =
-    process.env.DB_HOST || process.env.MYSQLHOST;
+    process.env.DB_HOST ||
+    process.env.MYSQLHOST;
 
 const DB_PORT =
     process.env.DB_PORT ||
@@ -44,7 +58,8 @@ const DB_PORT =
     3306;
 
 const DB_USER =
-    process.env.DB_USER || process.env.MYSQLUSER;
+    process.env.DB_USER ||
+    process.env.MYSQLUSER;
 
 const DB_PASSWORD =
     process.env.DB_PASSWORD ||
@@ -100,6 +115,7 @@ db.connect((err) => {
 
     console.log(
         "================================="
+
     );
 
 });
@@ -199,12 +215,23 @@ function setupTables() {
 
 // ======================================================
 // HOME PAGE
+// IMPORTANT
+//
+// Render live URL:
+//
+// https://smart-restaurant-3axh.onrender.com/
+//
+// This will now open QR TABLE PAGE.
+// It will NOT open index.html.
 // ======================================================
 
 app.get("/", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "qr-tables.html")
+        path.join(
+            frontendPath,
+            "qr-tables.html"
+        )
     );
 
 });
@@ -238,7 +265,8 @@ app.post("/api/orders", (req, res) => {
 
             success: false,
 
-            message: "Invalid order data"
+            message:
+                "Invalid order data"
 
         });
 
@@ -392,7 +420,7 @@ app.post("/api/orders", (req, res) => {
                     db.query(
                         updateTableSQL,
                         [table],
-                        (err, tableUpdateResult) => {
+                        (err) => {
 
                             if (err) {
 
@@ -1312,111 +1340,182 @@ app.put(
 // FRONTEND PAGE ROUTES
 // ======================================================
 
-// Customer menu
+
+// ------------------------------------------------------
+// CUSTOMER MENU
+//
+// IMPORTANT:
+// /menu.html → customer menu
+// /menu.html?table=1 → Table 1 customer menu
+// ------------------------------------------------------
+
 app.get("/menu.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "index.html")
+        path.join(
+            frontendPath,
+            "index.html"
+        )
     );
 
 });
 
 
-// Kitchen
+// ------------------------------------------------------
+// KITCHEN
+// ------------------------------------------------------
+
 app.get("/kitchen.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "kitchen.html")
+        path.join(
+            frontendPath,
+            "kitchen.html"
+        )
     );
 
 });
 
 
-// Billing
+// ------------------------------------------------------
+// BILLING
+// ------------------------------------------------------
+
 app.get("/billing.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "billing.html")
+        path.join(
+            frontendPath,
+            "billing.html"
+        )
     );
 
 });
 
 
-// Order history
+// ------------------------------------------------------
+// ORDER HISTORY
+// ------------------------------------------------------
+
 app.get("/order-history.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "order-history.html")
+        path.join(
+            frontendPath,
+            "order-history.html"
+        )
     );
 
 });
 
 
-// Order status
+// ------------------------------------------------------
+// ORDER STATUS
+// ------------------------------------------------------
+
 app.get("/order-status.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "order-status.html")
+        path.join(
+            frontendPath,
+            "order-status.html"
+        )
     );
 
 });
 
 
-// Old status URL support
+// ------------------------------------------------------
+// OLD STATUS URL SUPPORT
+// ------------------------------------------------------
+
 app.get("/status.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "order-status.html")
+        path.join(
+            frontendPath,
+            "order-status.html"
+        )
     );
 
 });
 
 
-// Bill
+// ------------------------------------------------------
+// BILL
+// ------------------------------------------------------
+
 app.get("/bill.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "bill.html")
+        path.join(
+            frontendPath,
+            "bill.html"
+        )
     );
 
 });
 
 
-// QR tables
+// ------------------------------------------------------
+// QR TABLES
+// ------------------------------------------------------
+
 app.get("/qr-tables.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "qr-tables.html")
+        path.join(
+            frontendPath,
+            "qr-tables.html"
+        )
     );
 
 });
 
 
-// Cashier
+// ------------------------------------------------------
+// CASHIER
+// ------------------------------------------------------
+
 app.get("/cashier.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "cashier.html")
+        path.join(
+            frontendPath,
+            "cashier.html"
+        )
     );
 
 });
 
 
-// Admin
+// ------------------------------------------------------
+// ADMIN
+// ------------------------------------------------------
+
 app.get("/admin.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "admin.html")
+        path.join(
+            frontendPath,
+            "admin.html"
+        )
     );
 
 });
 
 
-// Tables
+// ------------------------------------------------------
+// TABLES
+// ------------------------------------------------------
+
 app.get("/tables.html", (req, res) => {
 
     res.sendFile(
-        path.join(frontendPath, "tables.html")
+        path.join(
+            frontendPath,
+            "tables.html"
+        )
     );
 
 });
@@ -1475,8 +1574,17 @@ app.listen(
         );
 
         console.log(
+            "🏠 Home: QR Tables"
+        );
+
+        console.log(
+            "🍽️ Menu: /menu.html"
+        );
+
+        console.log(
             "================================="
         );
+
 
         // Setup database tables
         setupTables();

@@ -200,45 +200,43 @@
     <script>
 
         // ==================================================
-        // LIVE RENDER SERVER
+        // RENDER SERVER
         // ==================================================
-
-        /*
-            IMPORTANT:
-
-            DO NOT USE:
-
-            http://10.29.95.40:5500
-
-            That is your local PC address.
-
-            Use Render server instead.
-        */
 
         const SERVER_URL =
             "https://smart-restaurant-3axh.onrender.com";
 
 
+        console.log(
+            "🌐 SERVER:",
+            SERVER_URL
+        );
+
+
         // ==================================================
-        // FRONTEND MENU URL
+        // CUSTOMER MENU URL
         // ==================================================
 
         /*
-            Your server.js contains:
+            IMPORTANT:
 
-            app.use(express.static(frontendPath));
+            Customer menu is NOT "/"
 
-            and
+            Customer menu is:
 
-            app.get("/", ... index.html)
+            /menu.html
 
-            So customer menu can open directly using:
+            Example:
 
-            https://smart-restaurant-3axh.onrender.com/?table=1
+            Table 1:
+            https://smart-restaurant-3axh.onrender.com/menu.html?table=1
+
+            Table 2:
+            https://smart-restaurant-3axh.onrender.com/menu.html?table=2
         */
 
         const FRONTEND_URL =
-            SERVER_URL + "/";
+            SERVER_URL + "/menu.html";
 
 
         // ==================================================
@@ -263,9 +261,17 @@
                 `qr-table-${table}`;
 
 
+            // ----------------------------------------------
+            // TABLE-SPECIFIC MENU URL
+            // ----------------------------------------------
+
             const menuURL =
                 `${FRONTEND_URL}?table=${table}`;
 
+
+            // ----------------------------------------------
+            // CREATE CARD
+            // ----------------------------------------------
 
             tablesContainer.innerHTML += `
 
@@ -314,9 +320,23 @@
             table++
         ) {
 
+            // ----------------------------------------------
+            // TABLE-SPECIFIC MENU URL
+            // ----------------------------------------------
+
             const menuURL =
                 `${FRONTEND_URL}?table=${table}`;
 
+
+            console.log(
+                `📱 Table ${table} QR:`,
+                menuURL
+            );
+
+
+            // ----------------------------------------------
+            // GENERATE QR
+            // ----------------------------------------------
 
             new QRCode(
 
@@ -347,6 +367,12 @@
 
             const menuURL =
                 `${FRONTEND_URL}?table=${table}`;
+
+
+            console.log(
+                "🍽️ Opening menu:",
+                menuURL
+            );
 
 
             window.open(
